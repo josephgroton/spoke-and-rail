@@ -61,7 +61,7 @@
   .card:hover{background:var(--panel)}
   .card.sel{background:var(--panel);border-left:3px solid var(--bike);padding-left:11px}
   .card .top{display:flex;align-items:baseline;gap:8px}
-  .card .name{font-family:var(--display);text-transform:uppercase;letter-spacing:.09em;font-size:13px;font-weight:700;flex:1}
+  .card .name{font-family:var(--body);text-transform:uppercase;letter-spacing:.09em;font-size:13px;font-weight:700;flex:1}
   .card .time{font-family:var(--mono);font-size:20px;font-weight:700}
   .card .delta{font-family:var(--mono);font-size:12px}
   .delta.faster{color:var(--good)} .delta.slower{color:var(--bad)} .delta.base{color:var(--faint)}
@@ -80,6 +80,14 @@
   .endrow{display:flex;gap:10px;align-items:center}
   .endrow .body{font-size:12px;color:var(--text);font-weight:600;padding-bottom:2px}
   .note{font-size:12px;color:var(--faint);margin-top:7px;line-height:1.5}
+  .car-vs{background:var(--ink);color:var(--paper);padding:11px 13px}
+  .cv-top{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
+  .cv-label{font-family:var(--body);text-transform:uppercase;letter-spacing:.09em;font-size:12px;font-weight:700;flex:1;color:#9a9288}
+  .cv-time{font-family:var(--mono);font-size:20px;font-weight:700}
+  .cv-cost{font-family:var(--mono);font-size:13px;color:#9a9288}
+  .cv-delta{font-size:13px;line-height:1.45;margin-bottom:5px}
+  .cv-delta b{color:var(--paper)}
+  .cv-note{font-size:11px;color:#5a5652}
   footer{padding:10px 18px;border-top:1px solid var(--line);font-size:11px;color:var(--faint);line-height:1.5}
   /* ---------- map ---------- */
   #map{flex:1;min-width:0;background:var(--paper)}
@@ -510,6 +518,26 @@ function readProfile(){
     (sc.id==='lock'&&PROF.hasBike)||
     (sc.id==='indego'&&PROF.indego!=='none'));
 }
+function carCard(A,B,itins){
+  const dist=hav(A,B)*CIRCUITY;
+  const carMin=Math.round(dist/20*60)+5; /* 20 mph urban avg + 5 min parking */
+  const carFuel=dist*0.21;               /* fuel-only, ~$0.21/mi */
+  /* find best transit+bike option */
+  let bestMin=Infinity,bestCost=null;
+  for(const sc of ACTIVE){
+    const r=itins[sc.id];
+    if(r&&r.min<bestMin){bestMin=r.min;bestCost=tripCost(r,PROF).cost;}
+  }
+  let deltaHtml='';
+  if(bestCost!==null){
+    const tDiff=Math.round(bestMin)-carMin;
+    const cDiff=bestCost-carFuel;
+    const tTxt=tDiff>1?`<b>${tDiff} min slower</b>`:tDiff<-1?`<b>${-tDiff} min faster</b>`:'<b>same time</b>';
+    const cTxt=cDiff<-0.10?`saves <b>$${(-cDiff).toFixed(2)}</b>`:cDiff>0.10?`costs <b>$${cDiff.toFixed(2)} more</b>`:'<b>similar cost</b>';
+    deltaHtml=`<div class="cv-delta">best option: ${tTxt} · ${cTxt}</div>`;
+  }
+  return `<div class="car-vs"><div class="cv-top"><span class="cv-label">by car</span><span class="cv-time">${carMin} min</span><span class="cv-cost">~$${carFuel.toFixed(2)} fuel</span></div>${deltaHtml}<div class="cv-note">20 mph avg incl. parking search · fuel est. $0.21/mi · parking &amp; tolls not included</div></div>`;
+}
 function compute(){
   if(!A||!B)return;
   readProfile();
@@ -527,6 +555,7 @@ function compute(){
     html+=`<div class="note">Reference: riding the whole way on your bike ≈ <b style="color:var(--text)">${Math.round(directBike)} min</b> (${(hav(A,B)*CIRCUITY).toFixed(1)} mi street distance), $0.${peak?' Peak hours: SEPTA bars bikes on board, so carry-aboard itineraries lean on PATCO or fall back to riding.':''}</div>`;
   }
   html+=`<div class="note">Costs assume contactless/Key payment. PATCO fares exact; SEPTA Metro $2.90 incl. free transfers; Regional Rail zone fares are estimates${PROF.indego==='member'?'; Indego plan cost ($20/mo or $156/yr) not counted per-trip':''}.</div>`;
+  html+=carCard(A,B,itins);
   $('results').innerHTML=html;
   document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>select(c.dataset.sc)));
   select(bestScenario());
