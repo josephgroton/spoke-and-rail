@@ -37,8 +37,15 @@
   button:hover{background:var(--panel)}
   button:focus-visible,select:focus-visible{outline:2px solid var(--bike);outline-offset:1px}
   .pt{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
-  .prof{display:flex;flex-direction:column;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:0;padding:9px 11px}
-  .ptitle{font-family:var(--display);text-transform:uppercase;letter-spacing:.11em;font-size:11px;color:var(--dim);font-weight:700}
+  .prof{background:var(--panel2);border:1px solid var(--line);border-radius:0;padding:9px 11px}
+  .prof-head{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+  .ptitle{font-family:var(--display);text-transform:uppercase;letter-spacing:.11em;font-size:11px;color:var(--dim);font-weight:700;flex-shrink:0}
+  .prof-sum{font-size:11px;color:var(--faint);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none}
+  .prof.collapsed .prof-sum{display:block}
+  .prof-chev{width:7px;height:7px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .18s;flex-shrink:0;margin-bottom:2px}
+  .prof.collapsed .prof-chev{transform:rotate(-45deg)}
+  .prof-body{margin-top:8px;display:flex;flex-direction:column;gap:7px}
+  .prof.collapsed .prof-body{display:none}
   .cost{font-family:var(--mono);font-size:12px;color:var(--good);background:rgba(10,107,78,.08);border:1px solid rgba(10,107,78,.3);border-radius:0;padding:1px 7px}
   .pt input{accent-color:var(--bsl);width:15px;height:15px;cursor:pointer}
   .endpoints{display:flex;flex-direction:column;gap:6px}
@@ -135,17 +142,23 @@
           <ul class="suggestions" id="bSugg" role="listbox"></ul>
         </div>
       </div>
-      <div class="prof">
-        <div class="ptitle">Rider profile</div>
-        <label class="pt"><input type="checkbox" id="hasBike" checked> I have a personal bike</label>
-        <label class="pt" style="margin-left:22px"><input type="checkbox" id="carryOK" checked> …and I'm willing to take it aboard transit</label>
-        <label class="pt">Indego bikeshare:&nbsp;
-          <select id="indegoPlan" style="flex:1">
-            <option value="payg">pay per ride — $4.50 / 30 min</option>
-            <option value="member">member — Indego30/365, rides included</option>
-            <option value="none">don't use Indego</option>
-          </select>
-        </label>
+      <div class="prof" id="prof">
+        <div class="prof-head" id="profHead">
+          <div class="ptitle">Rider profile</div>
+          <span id="profSum" class="prof-sum"></span>
+          <span class="prof-chev"></span>
+        </div>
+        <div class="prof-body" id="profBody">
+          <label class="pt"><input type="checkbox" id="hasBike" checked> I have a personal bike</label>
+          <label class="pt" style="margin-left:22px"><input type="checkbox" id="carryOK" checked> …and I'm willing to take it aboard transit</label>
+          <label class="pt">Indego bikeshare:&nbsp;
+            <select id="indegoPlan" style="flex:1">
+              <option value="payg">pay per ride — $4.50 / 30 min</option>
+              <option value="member">member — Indego30/365, rides included</option>
+              <option value="none">don't use Indego</option>
+            </select>
+          </label>
+        </div>
       </div>
       <label class="pt"><input type="checkbox" id="peak"> Peak hours (weekday 6–9a / 3–6p) — SEPTA bars bikes on board; PATCO still allows them</label>
       <div class="hint">Type to search — pick a suggestion or press Enter. You can also click the map. Network: MFL, BSL, Chestnut Hill West, PATCO, and sample Indego docks.</div>
@@ -500,7 +513,24 @@ $('bInput').addEventListener('keydown',e=>{
 $('aInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('aSugg'),150));
 $('bInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('bSugg'),150));
 $('peak').addEventListener('change',compute);
-for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',compute);
+function profSummary(){
+  readProfile();
+  const parts=[];
+  if(PROF.hasBike)parts.push(PROF.carryOK?'bike + carry':'bike, no carry');
+  else parts.push('no bike');
+  parts.push(PROF.indego==='member'?'indego member':PROF.indego==='payg'?'indego pay/ride':'no indego');
+  return parts.join(' · ');
+}
+function collapseProf(){
+  $('profSum').textContent=profSummary();
+  $('prof').classList.add('collapsed');
+}
+$('profHead').addEventListener('click',()=>{
+  const wasCollapsed=$('prof').classList.contains('collapsed');
+  $('prof').classList.toggle('collapsed');
+  if(!wasCollapsed)$('profSum').textContent=profSummary();
+});
+for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{compute();setTimeout(collapseProf,350);});
 function clearRoutes(){routeLayers.forEach(l=>l.remove());routeLayers=[];}
 const SCENARIOS=[
   {id:'baseline',name:'Walk + transit',sub:'the Google Maps answer'},
@@ -518,25 +548,37 @@ function readProfile(){
     (sc.id==='lock'&&PROF.hasBike)||
     (sc.id==='indego'&&PROF.indego!=='none'));
 }
+function carDelta(carMin,carFuel){
+  let bestMin=Infinity,bestCost=null;
+  for(const sc of ACTIVE){const r=itins[sc.id];if(r&&r.min<bestMin){bestMin=r.min;bestCost=tripCost(r,PROF).cost;}}
+  if(bestCost===null)return '';
+  const tDiff=Math.round(bestMin)-carMin;
+  const cDiff=bestCost-carFuel;
+  const tTxt=tDiff>1?`<b>${tDiff} min slower</b>`:tDiff<-1?`<b>${-tDiff} min faster</b>`:'<b>same time</b>';
+  const cTxt=cDiff<-0.10?`saves <b>$${(-cDiff).toFixed(2)}</b>`:cDiff>0.10?`costs <b>$${cDiff.toFixed(2)} more</b>`:'<b>similar cost</b>';
+  return `<div class="cv-delta" id="cvDelta">best option: ${tTxt} · ${cTxt}</div>`;
+}
 function carCard(A,B,itins){
   const dist=hav(A,B)*CIRCUITY;
-  const carMin=Math.round(dist/20*60)+5; /* 20 mph urban avg + 5 min parking */
-  const carFuel=dist*0.21;               /* fuel-only, ~$0.21/mi */
-  /* find best transit+bike option */
-  let bestMin=Infinity,bestCost=null;
-  for(const sc of ACTIVE){
-    const r=itins[sc.id];
-    if(r&&r.min<bestMin){bestMin=r.min;bestCost=tripCost(r,PROF).cost;}
-  }
-  let deltaHtml='';
-  if(bestCost!==null){
-    const tDiff=Math.round(bestMin)-carMin;
-    const cDiff=bestCost-carFuel;
-    const tTxt=tDiff>1?`<b>${tDiff} min slower</b>`:tDiff<-1?`<b>${-tDiff} min faster</b>`:'<b>same time</b>';
-    const cTxt=cDiff<-0.10?`saves <b>$${(-cDiff).toFixed(2)}</b>`:cDiff>0.10?`costs <b>$${cDiff.toFixed(2)} more</b>`:'<b>similar cost</b>';
-    deltaHtml=`<div class="cv-delta">best option: ${tTxt} · ${cTxt}</div>`;
-  }
-  return `<div class="car-vs"><div class="cv-top"><span class="cv-label">by car</span><span class="cv-time">${carMin} min</span><span class="cv-cost">~$${carFuel.toFixed(2)} fuel</span></div>${deltaHtml}<div class="cv-note">20 mph avg incl. parking search · fuel est. $0.21/mi · parking &amp; tolls not included</div></div>`;
+  const carMin=Math.round(dist/20*60)+5;
+  const carFuel=dist*0.21;
+  return `<div class="car-vs" id="carVs"><div class="cv-top"><span class="cv-label">by car</span><span class="cv-time" id="cvTime">${carMin} min</span><span class="cv-cost" id="cvCost">~$${carFuel.toFixed(2)} fuel</span></div>${carDelta(carMin,carFuel)}<div class="cv-note" id="cvNote">routing estimate · no live traffic · fuel $0.21/mi · parking &amp; tolls not included</div></div>`;
+}
+function fetchCarRoute(A,B){
+  fetch(`https://router.project-osrm.org/route/v1/driving/${A.lng},${A.lat};${B.lng},${B.lat}?overview=false`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.routes||!data.routes.length||!$('carVs'))return;
+      const min=Math.round(data.routes[0].duration/60);
+      const dist=data.routes[0].distance/1609.34;
+      const fuel=dist*0.21;
+      $('cvTime').textContent=`${min} min`;
+      $('cvCost').textContent=`~$${fuel.toFixed(2)} fuel`;
+      $('cvNote').textContent=`${dist.toFixed(1)} mi by road · $0.21/mi fuel · no live traffic · parking & tolls not included`;
+      const d=$('cvDelta');
+      if(d)d.outerHTML=carDelta(min,fuel);
+    })
+    .catch(()=>{});
 }
 function compute(){
   if(!A||!B)return;
@@ -559,6 +601,7 @@ function compute(){
   $('results').innerHTML=html;
   document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>select(c.dataset.sc)));
   select(bestScenario());
+  fetchCarRoute(A,B);
 }
 function bestScenario(){
   let best=null,bt=Infinity;
