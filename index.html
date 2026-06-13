@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Spoke &amp; Rail — bike+transit router</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#18140f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spoke &amp; Rail">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
   :root{
@@ -571,6 +576,12 @@ function select(scId){
     }
   }
   if(selPts.length>1)map.fitBounds(selPts,{padding:[40,40]});
+}
+</script>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/spoke-and-rail/sw.js')
+    .catch(err=>console.warn('SW registration failed:',err));
 }
 </script>
 </body>

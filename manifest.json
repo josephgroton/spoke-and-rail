@@ -1,0 +1,25 @@
+{
+  "name": "Spoke & Rail",
+  "short_name": "Spoke & Rail",
+  "description": "Bike+transit router for Philadelphia — SEPTA + PATCO",
+  "start_url": "/spoke-and-rail/",
+  "scope": "/spoke-and-rail/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#18140f",
+  "theme_color": "#18140f",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

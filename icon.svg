@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#18140f"/>
+  <text x="256" y="140" font-family="Arial,sans-serif" font-size="100" font-weight="700" text-anchor="middle" fill="#faf6f0">spoke</text>
+  <text x="256" y="370" font-family="Arial,sans-serif" font-size="290" font-weight="700" text-anchor="middle" fill="#0d8f6a">&amp;</text>
+  <text x="256" y="470" font-family="Arial,sans-serif" font-size="100" font-weight="700" text-anchor="middle" fill="#faf6f0">rail</text>
+</svg>
