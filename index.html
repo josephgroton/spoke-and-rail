@@ -42,7 +42,7 @@
   .ptitle{font-family:var(--display);text-transform:uppercase;letter-spacing:.11em;font-size:11px;color:var(--dim);font-weight:700;flex-shrink:0}
   .prof-sum{font-size:11px;color:var(--faint);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none}
   .prof.collapsed .prof-sum{display:block}
-  .prof-chev{width:7px;height:7px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .18s;flex-shrink:0;margin-bottom:2px}
+  .prof-chev{width:9px;height:9px;border-right:2.5px solid var(--ink);border-bottom:2.5px solid var(--ink);transform:rotate(45deg);transition:transform .18s;flex-shrink:0;margin-bottom:3px}
   .prof.collapsed .prof-chev{transform:rotate(-45deg)}
   .prof-body{margin-top:8px;display:flex;flex-direction:column;gap:7px}
   .prof.collapsed .prof-body{display:none}
@@ -659,9 +659,15 @@ function select(scId){
       if(!l.from||!l.to||l.mode==='wait')continue;
       let pts=[[l.from.lat,l.from.lng],[l.to.lat,l.to.lng]];
       if(l.mode==='ride'&&l.line){
-        const seq=SEQ[l.line],i=seq.findIndex(id=>id===l.from.id),
-              j=seq.findIndex(id=>STATIONS[id].name===l.alight||id===l.to.id);
-        if(i>-1&&j>-1){const lo=Math.min(i,j),hi=Math.max(i,j);let slice=seq.slice(lo,hi+1).map(id=>[STATIONS[id].lat,STATIONS[id].lng]);if(i>j)slice.reverse();pts=slice;}
+        const seq=SEQ[l.line];
+        const i=seq.findIndex(id=>id===l.from.id||STATIONS[id].name===l.from.name);
+        const j=seq.findIndex(id=>id===l.to.id||STATIONS[id].name===l.alight||STATIONS[id].name===l.to.name);
+        if(i>-1&&j>-1&&i!==j){
+          const lo=Math.min(i,j),hi=Math.max(i,j);
+          let slice=seq.slice(lo,hi+1).map(id=>[STATIONS[id].lat,STATIONS[id].lng]);
+          if(i>j)slice.reverse();
+          pts=slice;
+        }
       }
       if(isSel)selPts.push(...pts);
       const c=l.line?LINES[l.line].color:(l.mode==='bike'?'#0d8f6a':'#6b6258');
