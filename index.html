@@ -243,6 +243,27 @@ const DOCKS = [
   ['d_fish','Indego: Frankford & Girard',39.9707,-75.1330], ['d_23s','Indego: 23rd & South',39.9450,-75.1790],
   ['d_sgb','Indego: Broad & Spring Garden',39.9634,-75.1614]
 ].map(([id,name,lat,lng])=>({id,name,lat,lng}));
+/* Major regional bike trails — drawn as a permanent map layer */
+const BIKEWAYS = [
+  {name:'Schuylkill River Trail', coords:[
+    [39.9283,-75.1878],[39.9362,-75.1860],[39.9420,-75.1851],[39.9467,-75.1838],
+    [39.9538,-75.1820],[39.9558,-75.1817],[39.9615,-75.1803],[39.9650,-75.1780],
+    [39.9688,-75.1840],[39.9724,-75.1888],[39.9820,-75.1980],[39.9942,-75.2148],
+    [40.0058,-75.2182],[40.0138,-75.2207],[40.0192,-75.2242],[40.0248,-75.2278],
+    [40.0418,-75.2468],[40.0582,-75.2678],[40.0790,-75.3015]
+  ]},
+  {name:'Delaware River Trail', coords:[
+    [39.9314,-75.1358],[39.9352,-75.1338],[39.9420,-75.1355],[39.9464,-75.1382],
+    [39.9527,-75.1377],[39.9558,-75.1395],[39.9622,-75.1340],[39.9672,-75.1304],
+    [39.9712,-75.1282],[39.9778,-75.1244],[39.9838,-75.1210],[39.9912,-75.1145],
+    [40.0010,-75.1068],[40.0142,-75.0878],[40.0298,-75.0728],[40.0432,-75.0668]
+  ]},
+  {name:'Wissahickon Trail', coords:[
+    [40.0738,-75.2220],[40.0662,-75.2248],[40.0588,-75.2262],[40.0502,-75.2264],
+    [40.0422,-75.2258],[40.0340,-75.2218],[40.0260,-75.2155],[40.0228,-75.2085],
+    [40.0195,-75.2025],[40.0158,-75.1998]
+  ]}
+];
 const PRESETS = {
   'mtairy-collingswood':{a:[40.0589,-75.1920,'Mt. Airy (Allens Lane area)'], b:[39.9180,-75.0710,'Collingswood, NJ']},
   'pbreeze-haddonfield':{a:[39.9330,-75.1850,'Point Breeze'], b:[39.8990,-75.0350,'Haddonfield, NJ']},
@@ -436,6 +457,11 @@ for(const [ln,ids] of Object.entries(SEQ)){
 for(const dk of DOCKS){
   L.marker([dk.lat,dk.lng],{icon:L.divIcon({className:'',html:'<div class="dock-ic" style="width:8px;height:8px;background:#12a37a"></div>',iconSize:[8,8],iconAnchor:[4,4]}),keyboard:false})
     .addTo(map).bindTooltip(dk.name);
+}
+/* bike trail layer — drawn under routes, distinct style */
+for(const bw of BIKEWAYS){
+  L.polyline(bw.coords,{color:'#2d7a3a',weight:2.5,opacity:0.55,dashArray:'5 5',interactive:true})
+    .addTo(map).bindTooltip(bw.name,{sticky:true});
 }
 let A=null,B=null,nextIsA=true,mA=null,mB=null,routeLayers=[],itins={},selected=null;
 const $=id=>document.getElementById(id);
@@ -647,8 +673,21 @@ function card(sc,r,base){
   const costChip=`<span class="cost" title="${tc.items.join(' + ')||'no fares'}">${tc.cost===0?'$0':(tc.est?'~':'')+'$'+tc.cost.toFixed(2)}</span>`;
   return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${Math.round(r.min)}<span style="font-size:11px;color:var(--dim)"> min</span></div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}</div>${strip}</div>`;
 }
+let selEpoch=0;
+function fetchOsrmBike(from,to,idx,epoch,opts){
+  fetch(`https://router.project-osrm.org/route/v1/bike/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(selEpoch!==epoch||!data.routes?.length||!routeLayers[idx])return;
+      const coords=data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+      routeLayers[idx].remove();
+      routeLayers[idx]=L.polyline(coords,opts).addTo(map);
+    })
+    .catch(()=>{});
+}
 function select(scId){
   if(!scId)return;
+  selEpoch++;const epoch=selEpoch;
   selected=scId;clearRoutes();
   document.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.dataset.sc===scId));
   const selPts=[];
@@ -671,7 +710,11 @@ function select(scId){
       }
       if(isSel)selPts.push(...pts);
       const c=l.line?LINES[l.line].color:(l.mode==='bike'?'#0d8f6a':'#6b6258');
-      routeLayers.push(L.polyline(pts,{color:c,weight:isSel?5:2,opacity:isSel?0.95:0.15,dashArray:l.mode==='ride'?null:(l.mode==='bike'?'8 6':'2 7')}).addTo(map));
+      const opts={color:c,weight:isSel?5:2,opacity:isSel?0.95:0.15,dashArray:l.mode==='ride'?null:(l.mode==='bike'?'8 6':'2 7')};
+      routeLayers.push(L.polyline(pts,opts).addTo(map));
+      /* replace straight-line bike legs with OSRM-routed paths for selected scenario */
+      if(isSel&&l.mode==='bike'&&!l.indego&&l.from.lat&&l.to.lat)
+        fetchOsrmBike(l.from,l.to,routeLayers.length-1,epoch,opts);
     }
   }
   if(selPts.length>1)map.fitBounds(selPts,{padding:[40,40]});
