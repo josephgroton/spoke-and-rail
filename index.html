@@ -156,6 +156,7 @@
         <div class="prof-body" id="profBody">
           <label class="pt"><input type="checkbox" id="hasBike" checked> I have a personal bike</label>
           <label class="pt" style="margin-left:22px"><input type="checkbox" id="carryOK" checked> …and I'm willing to take it aboard transit</label>
+          <label class="pt" id="bikeMaxRow" style="margin-left:22px">Show bike-only option up to <input type="number" id="bikeMax" min="1" max="50" value="8" style="width:44px;padding:2px 5px;font-size:13px;border:1px solid var(--line);background:var(--panel2);color:var(--text)"> mi</label>
           <label class="pt">Indego bikeshare:&nbsp;
             <select id="indegoPlan" style="flex:1">
               <option value="payg">pay per ride — $4.50 / 30 min</option>
@@ -819,22 +820,27 @@ $('profHead').addEventListener('click',()=>{
   if(!wasCollapsed)$('profSum').textContent=profSummary();
 });
 for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{compute();setTimeout(collapseProf,350);});
+$('bikeMax').addEventListener('change',compute);
 function clearRoutes(){routeLayers.forEach(l=>l.remove());routeLayers=[];}
 const SCENARIOS=[
   {id:'baseline',name:'Walk + transit',sub:'the Google Maps answer'},
   {id:'carry',name:'Bike carried aboard',sub:'bike rides the train with you'},
   {id:'lock',name:'Bike to station, lock it',sub:'bike the first mile, walk the last'},
-  {id:'indego',name:'Indego bikeshare',sub:'dock-to-dock legs, Philly side only'}
+  {id:'indego',name:'Indego bikeshare',sub:'dock-to-dock legs, Philly side only'},
+  {id:'bikeonly',name:'Bike only',sub:'ride the whole way on your bike'}
 ];
-let PROF={hasBike:true,carryOK:true,indego:'payg'},ACTIVE=[];
+let PROF={hasBike:true,carryOK:true,indego:'payg',bikeMax:8},ACTIVE=[];
 function readProfile(){
-  PROF={hasBike:$('hasBike').checked,carryOK:$('carryOK').checked,indego:$('indegoPlan').value};
+  PROF={hasBike:$('hasBike').checked,carryOK:$('carryOK').checked,indego:$('indegoPlan').value,bikeMax:parseFloat($('bikeMax').value)||8};
   $('carryOK').disabled=!PROF.hasBike;
+  $('bikeMaxRow').style.display=PROF.hasBike?'':'none';
+  const bikeDist=A&&B?hav(A,B)*CIRCUITY:0;
   ACTIVE=SCENARIOS.filter(sc=>
     sc.id==='baseline'||
     (sc.id==='carry'&&PROF.hasBike&&PROF.carryOK)||
     (sc.id==='lock'&&PROF.hasBike)||
-    (sc.id==='indego'&&PROF.indego!=='none'));
+    (sc.id==='indego'&&PROF.indego!=='none')||
+    (sc.id==='bikeonly'&&PROF.hasBike&&bikeDist<=PROF.bikeMax));
 }
 function carDelta(carMin,carFuel){
   let bestMin=Infinity,bestCost=null;
@@ -897,10 +903,15 @@ function compute(){
   }
   const base=route('baseline',peak,A,B);
   for(const sc of ACTIVE){
-    let r=sc.id==='baseline'?base:route(sc.id,peak,A,B);
-    /* carry/lock must include at least one transit leg — a pure bike route
-       means the router fell back to direct biking, which is not this scenario */
-    if(r&&(sc.id==='carry'||sc.id==='lock')&&!r.legs.some(l=>l.mode==='ride'))r=null;
+    let r;
+    if(sc.id==='bikeonly'){
+      const d=hav(A,B);
+      r={min:bikeMin(d),legs:[{mode:'bike',from:A,to:B,dist:d,label:`Bike ${(d*CIRCUITY).toFixed(1)} mi`}]};
+    } else {
+      r=sc.id==='baseline'?base:route(sc.id,peak,A,B);
+      /* carry/lock must include at least one transit leg */
+      if(r&&(sc.id==='carry'||sc.id==='lock')&&!r.legs.some(l=>l.mode==='ride'))r=null;
+    }
     itins[sc.id]=r;
   }
   /* sort active scenarios by trip time ascending; infeasible go last */
@@ -911,9 +922,9 @@ function compute(){
   });
   let html=carCard(A,B,itins);
   for(const sc of sorted) html+=card(sc,itins[sc.id],base);
-  if(PROF.hasBike){
+  if(PROF.hasBike&&hav(A,B)*CIRCUITY>PROF.bikeMax){
     const directBike=bikeMin(hav(A,B));
-    html+=`<div class="note">Reference: riding the whole way on your bike ≈ <b style="color:var(--text)">${Math.round(directBike)} min</b> (${(hav(A,B)*CIRCUITY).toFixed(1)} mi street distance), $0.${peak?' Peak hours: SEPTA bars bikes on inbound trains (AM) and outbound trains (PM); carry-aboard itineraries use PATCO only or may be infeasible.':''}</div>`;
+    html+=`<div class="note">Bike-only not shown: ${(hav(A,B)*CIRCUITY).toFixed(1)} mi exceeds your ${PROF.bikeMax} mi max. Adjust in rider profile to see it.</div>`;
   }
   html+=`<div class="note">Costs assume contactless/Key payment. PATCO fares exact; SEPTA Metro $2.90 incl. free transfers; Regional Rail zone fares are estimates${PROF.indego==='member'?'; Indego plan cost ($20/mo or $156/yr) not counted per-trip':''}.</div>`;
   $('results').innerHTML=html;
