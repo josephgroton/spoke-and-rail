@@ -991,7 +991,10 @@ function selectIntercity(trip){
 }
 let selEpoch=0;
 function fetchOsrmRoute(profile,from,to,idx,epoch,opts){
-  fetch(`https://router.project-osrm.org/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`)
+  const osrmUrl=profile==='foot'
+    ?`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`
+    :`https://router.project-osrm.org/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`;
+  fetch(osrmUrl)
     .then(r=>r.json())
     .then(data=>{
       if(selEpoch!==epoch||!data.routes?.length||!routeLayers[idx])return;
