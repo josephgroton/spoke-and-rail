@@ -895,7 +895,6 @@ function compute(){
     selectIntercity(intercityTrip);
     return;
   }
-  let html='';
   const base=route('baseline',peak,A,B);
   for(const sc of ACTIVE){
     let r=sc.id==='baseline'?base:route(sc.id,peak,A,B);
@@ -903,14 +902,20 @@ function compute(){
        means the router fell back to direct biking, which is not this scenario */
     if(r&&(sc.id==='carry'||sc.id==='lock')&&!r.legs.some(l=>l.mode==='ride'))r=null;
     itins[sc.id]=r;
-    html+=card(sc,r,base);
   }
+  /* sort active scenarios by trip time ascending; infeasible go last */
+  const sorted=[...ACTIVE].sort((a,b)=>{
+    const ra=itins[a.id],rb=itins[b.id];
+    if(!ra&&!rb)return 0; if(!ra)return 1; if(!rb)return -1;
+    return ra.min-rb.min;
+  });
+  let html=carCard(A,B,itins);
+  for(const sc of sorted) html+=card(sc,itins[sc.id],base);
   if(PROF.hasBike){
     const directBike=bikeMin(hav(A,B));
     html+=`<div class="note">Reference: riding the whole way on your bike ≈ <b style="color:var(--text)">${Math.round(directBike)} min</b> (${(hav(A,B)*CIRCUITY).toFixed(1)} mi street distance), $0.${peak?' Peak hours: SEPTA bars bikes on inbound trains (AM) and outbound trains (PM); carry-aboard itineraries use PATCO only or may be infeasible.':''}</div>`;
   }
   html+=`<div class="note">Costs assume contactless/Key payment. PATCO fares exact; SEPTA Metro $2.90 incl. free transfers; Regional Rail zone fares are estimates${PROF.indego==='member'?'; Indego plan cost ($20/mo or $156/yr) not counted per-trip':''}.</div>`;
-  html+=carCard(A,B,itins);
   $('results').innerHTML=html;
   document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>select(c.dataset.sc)));
   select(bestScenario());
@@ -1015,6 +1020,7 @@ function select(scId){
     const isSel=sc.id===scId;
     for(const l of r.legs){
       if(!l.from||!l.to||l.mode==='wait')continue;
+      if(!isSel&&l.mode!=='ride')continue; /* unselected: only draw transit lines, skip straight-line bike/walk */
       let pts=[[l.from.lat,l.from.lng],[l.to.lat,l.to.lng]];
       if(l.mode==='ride'&&l.line){
         const seq=SEQ[l.line];
