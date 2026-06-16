@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spoke &amp; Rail — Roadmap</title>
+<style>
+  :root{
+    --ink:#18140f; --panel:#f5f0e8; --panel2:#ede8df; --line:#18140f;
+    --paper:#faf6f0; --text:#18140f; --dim:#6b6258; --faint:#9a9288;
+    --good:#0a6b4e; --bad:#b52020; --bike:#0d8f6a;
+    --display:'Arial Narrow',Arial,sans-serif;
+    --body:Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--body);background:var(--paper);color:var(--text);min-height:100vh}
+
+  /* ---- header ---- */
+  header{padding:16px 24px 14px;border-bottom:2px solid var(--line);display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+  header h1{font-family:var(--display);font-size:28px;letter-spacing:0;text-transform:lowercase;font-weight:700;line-height:1}
+  header h1 .amp{color:var(--bike)}
+  nav{display:flex;gap:0;border:1px solid var(--line);flex-shrink:0}
+  nav a{font-family:var(--body);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;text-decoration:none;padding:6px 13px;color:var(--dim);border-right:1px solid var(--line);background:var(--panel2)}
+  nav a:last-child{border-right:none}
+  nav a:hover{background:var(--panel);color:var(--text)}
+  nav a.active{background:var(--ink);color:#fff}
+
+  /* ---- page layout ---- */
+  .page{max-width:900px;margin:0 auto;padding:40px 24px 60px}
+  .intro{font-size:14px;color:var(--dim);line-height:1.7;margin-bottom:36px;max-width:620px}
+  .intro b{color:var(--text)}
+
+  /* ---- section ---- */
+  .section{margin-bottom:40px}
+  .section-head{font-family:var(--display);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--faint);border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:16px}
+
+  /* ---- item row ---- */
+  .item{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid var(--panel2)}
+  .item:last-child{border-bottom:none}
+  .item-body{flex:1;min-width:0}
+  .item-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+  .item-desc{font-size:12px;color:var(--dim);line-height:1.5}
+  .item-desc b{color:var(--text);font-weight:600}
+  .badge{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border:1px solid;white-space:nowrap;flex-shrink:0;margin-top:2px}
+  .badge.shipped{color:var(--good);border-color:rgba(10,107,78,.35);background:rgba(10,107,78,.07)}
+  .badge.proposed{color:#1c66b8;border-color:rgba(28,102,184,.35);background:rgba(28,102,184,.07)}
+  .badge.idea{color:var(--dim);border-color:rgba(107,98,88,.3);background:rgba(107,98,88,.05)}
+
+  /* ---- legend ---- */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dim)}
+
+  @media(max-width:600px){
+    header{padding:12px 16px 10px}
+    .page{padding:24px 16px 40px}
+    .item{gap:10px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spoke <span class="amp">&amp;</span> Rail</h1>
+  <nav>
+    <a href="index.html">Map</a>
+    <a href="roadmap.html" class="active">Roadmap</a>
+  </nav>
+</header>
+
+<div class="page">
+  <p class="intro">
+    What's built, what's next, and what's on the wishlist. <b>Proposed</b> items are things Joey has asked for;
+    <b>Ideas</b> are suggestions based on what would make the biggest difference to the routing quality or geographic coverage.
+    This is a living document — the order within each section roughly reflects priority.
+  </p>
+
+  <div class="legend">
+    <div class="legend-item"><span class="badge shipped">Shipped</span> Already live</div>
+    <div class="legend-item"><span class="badge proposed">Proposed</span> On the build list</div>
+    <div class="legend-item"><span class="badge idea">Idea</span> Worth doing, not yet scoped</div>
+  </div>
+
+  <!-- =================== NETWORK =================== -->
+  <div class="section">
+    <div class="section-head">Network — transit data</div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">Philadelphia — SEPTA + PATCO</div>
+        <div class="item-desc">Full network: all 13 Regional Rail lines with zone fares, Market-Frankford + Broad Street + PATCO with exact fares, surface trolleys, sample Indego docks. Peak bike rules modeled exactly (PATCO always; SEPTA Metro/RR off-peak weekdays).</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">Boston — MBTA</div>
+        <div class="item-desc">Red, Orange, Green (B/C/D/E branches), Blue lines + Silver Line + key bus routes + commuter rail sketch. CharlieCard flat fare modeled.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">NYC — MTA Subway (L, J/Z, G)</div>
+        <div class="item-desc">Three lines covering Brooklyn and the L corridor into Manhattan. Bikes allowed 24/7 on NYC subway — no peak restrictions, which is modeled correctly.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">NYC — Metro-North Hudson + Harlem Lines</div>
+        <div class="item-desc">Hudson Line (GCT → Poughkeepsie, 10 stations) and Harlem Line (GCT → Brewster, 8 stations). Zone fares MN0–MN7, bikes off-peak only. Segment times calibrated to real timetables.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">NYC — NJ Transit NEC, Coast Line, Raritan Valley</div>
+        <div class="item-desc">Northeast Corridor (Penn → Trenton), North Jersey Coast Line (Penn → Bay Head), Raritan Valley Line (Penn → High Bridge). Newark Penn shared as transfer hub. Zone fares NJT0–NJT8.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">NYC — LIRR (Long Island Rail Road)</div>
+        <div class="item-desc">Penn Station to Long Island: Port Washington, Babylon, Far Rockaway, Ronkonkoma branches. Key destinations for shore and state park cycling. Bikes off-peak only.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">NYC — Subway expansion (A/C/E, 1/2/3, 4/5/6, N/Q/R/W, B/D/F/M, 7)</div>
+        <div class="item-desc">The remaining major subway lines to make NYC routing complete enough to compare bike+transit for trips that don't start near the L, J/Z, or G.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">NYC — Citi Bike docks (Manhattan)</div>
+        <div class="item-desc">Hardcoded key dock locations across Manhattan to enable the Citi Bike scenario in NYC mode, the way Indego docks work in Philly mode.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">NYC — NJ Transit additional lines</div>
+        <div class="item-desc">Morris &amp; Essex (Morristown + Gladstone branches), Montclair-Boonton, Pascack Valley, Port Jervis. Extends NJT coverage into northern NJ and the Hudson Valley.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">NJ Transit River LINE</div>
+        <div class="item-desc">Light rail Camden → Trenton, bikes allowed at all times. Ties together the two existing networks: PATCO (Philly mode) ends in Camden; NEC (NYC mode) ends in Trenton. A cross-mode bridge trip.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Hudson-Bergen Light Rail</div>
+        <div class="item-desc">Bayonne → Hoboken → Weehawken → North Bergen. Bikes always allowed. Serves the Jersey City waterfront, connects to NYC ferries and PATH. Flat $2.10 fare needs a separate billing model.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">NYC Ferry routes</div>
+        <div class="item-desc">NYC DOT Ferry is an underrated bike+transit connector — bikes always allowed, serves Astoria, Long Island City, South Brooklyn, Rockaway. Flat fare ~$4. Could unlock some compelling showcase routes.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Washington DC — WMATA Metro + Capital Bikeshare</div>
+        <div class="item-desc">The Metro allows bikes off-peak on all lines. Capital Bikeshare is one of the best-integrated bikeshare systems in the US. Good candidate for a fourth city given the strong bike+transit culture.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Live bikeshare availability (GBFS feeds)</div>
+        <div class="item-desc">Pull real-time dock counts from Citi Bike, Indego, and Bluebikes GBFS endpoints. Currently all docks are hardcoded static locations. Would let the router surface "no bikes available at this dock" before the user shows up.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== TRIP PLANNING =================== -->
+  <div class="section">
+    <div class="section-head">Trip planning</div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">Four scenarios with honest cost modeling</div>
+        <div class="item-desc">Walk + transit (baseline), bike carried aboard (with real peak rules), bike to station + lock it, and bikeshare dock-to-dock. Each shows marginal cost under the rider's profile.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">Route detail panel</div>
+        <div class="item-desc">Step-by-step breakdown slides in over the map when a scenario card is selected. Shows board/alight stations, stop count, wait time, and fare breakdown. Network dims to 7% opacity so the selected route reads clearly.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">Arrive-by time planning</div>
+        <div class="item-desc">Let users set a target arrival time. Each scenario card then shows "Leave by X:XX" and auto-flags peak restrictions based on the computed departure time. Philly first, then other cities.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge proposed">Proposed</span>
+      <div class="item-body">
+        <div class="item-title">Public lands showcase routes</div>
+        <div class="item-desc">Handcrafted preset routes to cycling-friendly public land destinations reachable by bike + transit: Wissahickon, Valley Forge, Hudson Highlands, Sandy Hook, D&amp;R Canal, Rockefeller State Park. The headline use case for the product.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Generalized cost optimization (time + fare tradeoff)</div>
+        <div class="item-desc">Expose a slider: "I'd ride X extra minutes to save $1." The router solves for a blended objective function instead of pure time. An Indego member and a casual rider would then get genuinely different routes, not just different price tags on the same route.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Permalink / shareable trip URL</div>
+        <div class="item-desc">Encode origin, destination, city, and profile into URL query params so a trip can be bookmarked or sent to someone. Low-effort, high-utility — especially for the public lands showcase routes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== ROUTING ENGINE =================== -->
+  <div class="section">
+    <div class="section-head">Routing engine quality</div>
+
+    <div class="item">
+      <span class="badge shipped">Shipped</span>
+      <div class="item-body">
+        <div class="item-title">Time-based Dijkstra with bike-possession state</div>
+        <div class="item-desc">State graph encodes whether the rider currently has their bike, enabling the carry/lock scenarios without separate routing passes. Bike and walk legs use real OSRM street geometry on the selected route.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Real GTFS timetables</div>
+        <div class="item-desc"><b>Biggest quality jump available.</b> Replace average-headway waits with actual departure times from published GTFS feeds. Users could plan around the 8:24 train instead of "approximately 22 minutes from now." SEPTA, NJ Transit, Metro-North, and PATCO all publish GTFS. Requires a build step or OTP backend.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Low-stress bike routing (LTS)</div>
+        <div class="item-desc">Route bike legs on protected lanes and quiet streets (Level of Traffic Stress 1–2) instead of shortest path. Mainstream apps route bikes like cars; this is a meaningful differentiator. Uses OSM cycleway/lane/surface tags. Currently all bike legs use OSRM car profile with a circuity factor.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Elevation and grade penalty for bike legs</div>
+        <div class="item-desc">Hills are a big deal for most cyclists. Add a grade-based time penalty to bike legs using OSM elevation data or a DEM. A flat 3-mile route on the Schuylkill Trail should rank above a hilly 2.5-mile shortcut through Manayunk.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =================== PRODUCTION =================== -->
+  <div class="section">
+    <div class="section-head">Production path</div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">OpenTripPlanner 2 backend</div>
+        <div class="item-desc">Replace the hand-built Dijkstra with OTP 2 self-hosted on a VPS (~$40–80/mo for 8–16 GB RAM). OTP handles bike+transit and bikeshare natively from real GTFS + OSM. The custom work becomes the cost model, peak rules, and this UI — which is where the product differentiation actually lives.</div>
+      </div>
+    </div>
+
+    <div class="item">
+      <span class="badge idea">Idea</span>
+      <div class="item-body">
+        <div class="item-title">Verified fare tables</div>
+        <div class="item-desc">Most Regional Rail and commuter rail fares in the app are marked ~ (estimated). Before any public launch, replace all estimated figures with verified numbers sourced directly from agency fare pages. SEPTA RR zone table, NJT fare calculator, Metro-North off-peak schedule.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
