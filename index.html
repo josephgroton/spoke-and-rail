@@ -436,7 +436,7 @@ let TRANSFERS = [
   ['univcity','30rr',4],  ['univcity','30mfl',5],
   ['templu','girbsl',6],  ['northphila','olney',5],
   ['manayunk_rr','manayunk_rr',0], /* NOR Manayunk near SRT/Wissahickon trails */
-  ['waynejct','girmfl',8],
+  /* waynejct↔girmfl removed — stations are 4+ miles apart, not a walkable transfer */
   /* Trolley portal ↔ MFL */
   ['tcc','34th',4],       ['tcc','40th',3]
 ];
@@ -1075,6 +1075,7 @@ function loadCity(key){
 })();
 let A=null,B=null,nextIsA=true,mA=null,mB=null,routeLayers=[],itins={},selected=null,intercityTrip=null;
 const $=id=>document.getElementById(id);
+function fmtMin(m){const r=Math.round(m);return r<60?`${r} min`:`${Math.floor(r/60)}h ${r%60}m`;}
 function abIcon(t){return L.divIcon({className:'',html:`<div class="ab-ic" style="width:24px;height:24px">${t}</div>`,iconSize:[24,24],iconAnchor:[12,12]});}
 function setPoint(which,lat,lng,label){
   const p={lat,lng,name:label||`${lat.toFixed(4)}, ${lng.toFixed(4)}`};
@@ -1083,6 +1084,8 @@ function setPoint(which,lat,lng,label){
   compute();
 }
 map.on('click',e=>{intercityTrip=null;setPoint(nextIsA?'A':'B',e.latlng.lat,e.latlng.lng);nextIsA=!nextIsA;});
+/* prevent detail panel clicks from bubbling to Leaflet map (which would set a new A/B point) */
+document.getElementById('routeDetail').addEventListener('click',e=>e.stopPropagation());
 $('citySelect').addEventListener('change',e=>loadCity(e.target.value));
 $('preset').addEventListener('change',e=>{
   const k=e.target.value;
@@ -1188,7 +1191,7 @@ function showDetail(scId){
   const costChip=tc.cost===0?'$0':(tc.est?'~':'')+'$'+tc.cost.toFixed(2);
   let html=`<div class="rd-head">
     <div class="rd-name">${sc.name}</div>
-    <div class="rd-meta"><span class="cost" title="${tc.items.join(' + ')||'no fares'}">${costChip}</span><span class="rd-bigtime">${Math.round(r.min)}<span style="font-size:14px;color:var(--dim);font-weight:400"> min</span></span>${dTxt}</div>
+    <div class="rd-meta"><span class="cost" title="${tc.items.join(' + ')||'no fares'}">${costChip}</span><span class="rd-bigtime">${fmtMin(r.min)}</span>${dTxt}</div>
     <button class="rd-close" onclick="hideDetail()">×</button>
   </div><div class="rd-body">`;
   if(A&&B){
@@ -1346,7 +1349,7 @@ function card(sc,r,base){
     delta>0.5?`<span class="delta slower">+${Math.round(delta)} min</span>`:'<span class="delta base">≈ same</span>';
   const tc=tripCost(r,PROF);
   const costChip=`<span class="cost" title="${tc.items.join(' + ')||'no fares'}">${tc.cost===0?'$0':(tc.est?'~':'')+'$'+tc.cost.toFixed(2)}</span>`;
-  return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${Math.round(r.min)}<span style="font-size:13px;color:var(--dim)"> min</span></div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}</div></div>`;
+  return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${fmtMin(r.min)}</div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}</div></div>`;
 }
 function intercityCard(trip){
   const peak=$('peak').checked;
@@ -1375,7 +1378,7 @@ function intercityCard(trip){
     strip+=`<div class="leg"><div class="rail"><div class="seg ${dashClass}" style="--c:${c}"></div><div class="dot" style="border-color:${c}"></div></div><div class="body">${body}</div><div class="min">${Math.max(1,Math.round(l.min))}m</div></div>`;
   }
   strip+=`<div class="endrow"><div class="rail"></div><div class="body">Arrive West Point</div></div></div>`;
-  return `<div class="card sel" data-sc="intercity"><div class="top"><div class="name">${trip.title}</div><span class="cost" title="${fareTitle}">~$${totalFare.toFixed(2)}</span><div class="time">${Math.round(totalMin)}<span style="font-size:11px;color:var(--dim)"> min</span></div></div><div class="hint">${trip.sub}${peakWarn}</div>${strip}</div>`;
+  return `<div class="card sel" data-sc="intercity"><div class="top"><div class="name">${trip.title}</div><span class="cost" title="${fareTitle}">~$${totalFare.toFixed(2)}</span><div class="time">${fmtMin(totalMin)}</div></div><div class="hint">${trip.sub}${peakWarn}</div>${strip}</div>`;
 }
 function selectIntercity(trip){
   selEpoch++;const epoch=selEpoch;
