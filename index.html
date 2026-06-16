@@ -750,23 +750,60 @@ try{(()=>{
     'bushwick-les':         {a:[40.7038,-73.9193,'Bushwick (DeKalb Ave)'],    b:[40.7182,-73.9874,'Lower East Side (Essex St)'],      label:'Bushwick → Lower East Side'},
     'wburg-midtown':        {a:[40.7172,-73.9565,'Williamsburg (Bedford Ave)'],b:[40.7351,-73.9903,'14th St / Union Square'],          label:'Williamsburg → 14th St/Union Sq'},
     'greenpt-carrollgdns':  {a:[40.7315,-73.9520,'Greenpoint Ave'],            b:[40.6858,-73.9901,'Carroll Gardens (Bergen St)'],     label:'Greenpoint → Carroll Gardens'},
-    /* Metro-North — best-case bike+transit showcase trips */
+    /* Metro-North */
     'midtown-tarrytown':    {a:[40.7484,-73.9877,'Chelsea, Manhattan'],         b:[41.0612,-73.8636,'Tarrytown (Rockefeller State Park)'],label:'Chelsea → Tarrytown (Hudson Line)'},
     'midtown-beacon':       {a:[40.7527,-73.9772,'Midtown East (near GCT)'],   b:[41.5050,-73.9785,'Beacon, NY (Hudson Valley)'],       label:'Midtown → Beacon (Hudson Line)'},
     'uptown-coldspring':    {a:[40.8049,-73.9378,'Harlem (125th St area)'],    b:[41.4147,-73.9551,'Cold Spring (Hudson Highlands)'],   label:'Harlem → Cold Spring (Hudson Line)'},
     'harlem-brewster':      {a:[40.8049,-73.9378,'Harlem (125th St area)'],    b:[41.4155,-73.5960,'Southeast / Brewster, NY'],         label:'Harlem → Brewster (Harlem Line)'},
+    /* NJ Transit */
+    'chelsea-longbranch':   {a:[40.7484,-73.9877,'Chelsea, Manhattan'],         b:[40.2986,-73.9870,'Long Branch (Jersey Shore)'],       label:'Chelsea → Long Branch (NJC)'},
+    'les-princeton':        {a:[40.7182,-73.9874,'Lower East Side'],            b:[40.3168,-74.6213,'Princeton Junction (D&R Canal)'],   label:'Lower East Side → Princeton Jct (NEC)'},
+    'chelsea-asburypark':   {a:[40.7484,-73.9877,'Chelsea, Manhattan'],         b:[40.2190,-74.0120,'Asbury Park (Jersey Shore)'],       label:'Chelsea → Asbury Park (NJC)'},
+    'midtown-somerville':   {a:[40.7527,-73.9772,'Midtown East'],               b:[40.5751,-74.6095,'Somerville, NJ (Raritan Valley)'],  label:'Midtown → Somerville (RVL)'},
   };
+  /* NJ Transit Rail — bikes off-peak only (no weekday AM inbound / PM outbound) */
+  nL.NEC={name:'NJ Transit NEC',       color:'#003087',headway:30,bikes:'offpeak',metro:false,rr:true,fareLabel:'NJ Transit'};
+  nL.NJC={name:'NJ Transit Coast Line',color:'#007DC5',headway:60,bikes:'offpeak',metro:false,rr:true,fareLabel:'NJ Transit'};
+  nL.RVL={name:'NJ Transit Raritan Valley',color:'#00843D',headway:60,bikes:'offpeak',metro:false,rr:true,fareLabel:'NJ Transit'};
+  /* NY Penn Station — shared NJT terminus (different building from GCT) */
+  nst('nyp','NY Penn Station',40.7506,-73.9971);
+  /* Newark Penn — transfer hub shared by all three NJT lines */
+  nst('newark_njt','Newark Penn Station',40.7347,-74.1734);
+  /* NEC key stops — ~70 min Penn→Trenton, calibrated to off-peak local */
+  nst('nec_metropark', 'Metropark',          40.5687,-74.3235);
+  nst('nec_newbruns',  'New Brunswick',       40.4865,-74.4429);
+  nst('nec_princeton', 'Princeton Junction',  40.3168,-74.6213);
+  nst('nec_hamilton',  'Hamilton',            40.2263,-74.6913);
+  nst('nec_trenton',   'Trenton',             40.2170,-74.7430);
+  /* NJC key stops — ~83 min Penn→Long Branch */
+  nst('njc_rahway',    'Rahway',              40.6080,-74.2778);
+  nst('njc_longbranch','Long Branch',         40.2986,-73.9870);
+  nst('njc_asburypark','Asbury Park',         40.2190,-74.0120);
+  nst('njc_bayhead',   'Bay Head',            40.0767,-74.0459);
+  /* RVL key stops — ~95 min Penn→High Bridge */
+  nst('rvl_westfield', 'Westfield',           40.6498,-74.3490);
+  nst('rvl_plainfield','Plainfield',          40.6173,-74.4074);
+  nst('rvl_somerville','Somerville',          40.5751,-74.6095);
+  nst('rvl_highbridge','High Bridge',         40.6671,-74.9015);
+  nSEQ.NEC=['nyp','newark_njt','nec_metropark','nec_newbruns','nec_princeton','nec_hamilton','nec_trenton'];
+  nSEQ.NJC=['nyp','newark_njt','njc_rahway','njc_longbranch','njc_asburypark','njc_bayhead'];
+  nSEQ.RVL=['nyp','newark_njt','rvl_westfield','rvl_plainfield','rvl_somerville','rvl_highbridge'];
+  for(const ln of ['NEC','NJC','RVL']) nSEQ[ln].forEach(id=>{if(nSt[id])nSt[id].lines.push(ln);});
+  nSEGMIN.NEC={default:10,'nyp|newark_njt':22,'newark_njt|nec_metropark':13,'nec_metropark|nec_newbruns':7,'nec_newbruns|nec_princeton':12,'nec_princeton|nec_hamilton':10,'nec_hamilton|nec_trenton':6};
+  nSEGMIN.NJC={default:15,'nyp|newark_njt':22,'newark_njt|njc_rahway':16,'njc_rahway|njc_longbranch':45,'njc_longbranch|njc_asburypark':10,'njc_asburypark|njc_bayhead':20};
+  nSEGMIN.RVL={default:12,'nyp|newark_njt':22,'newark_njt|rvl_westfield':25,'rvl_westfield|rvl_plainfield':8,'rvl_plainfield|rvl_somerville':20,'rvl_somerville|rvl_highbridge':20};
   window.NYC_DATA={
     LINES:nL,STATIONS:nSt,SEQ:nSEQ,SEGMIN:nSEGMIN,
     TRANSFERS:[],DOCKS:[],BIKEWAYS:[],PRESETS:nPRESETS,
     METRO_FARE:2.90,FARE_NAME:'MTA subway',
-    viewbox:'-74.10,40.60,-73.50,41.80',center:[40.900,-73.900],zoom:10,
-    desc:'Multimodal router that treats the bike as a first-class transit leg. NYC subway allows bikes 24/7; Metro-North allows bikes off-peak only.',
-    peakLabel:'Metro-North bars bikes during peak hours (weekday inbound AM / outbound PM). NYC subway allows bikes 24/7.',
-    networkHint:'Type to search — pick a suggestion or press Enter. Network: L, J/Z, G subway · Metro-North Hudson + Harlem lines. Metro-North: bikes off-peak only.',
+    viewbox:'-75.10,39.90,-73.50,41.80',center:[40.500,-74.100],zoom:9,
+    desc:'Multimodal router that treats the bike as a first-class transit leg. NYC subway allows bikes 24/7; Metro-North and NJ Transit allow bikes off-peak only.',
+    peakLabel:'Metro-North and NJ Transit bar bikes during peak hours (weekday inbound AM / outbound PM). NYC subway allows bikes 24/7.',
+    networkHint:'Type to search — pick a suggestion or press Enter. Network: L, J/Z, G subway · Metro-North Hudson + Harlem · NJ Transit NEC, Coast Line, Raritan Valley. MN + NJT: bikes off-peak only.',
     presetGroups:[
-      {label:'NYC Subway',keys:['bushwick-les','wburg-midtown','greenpt-carrollgdns']},
-      {label:'Metro-North',keys:['midtown-tarrytown','midtown-beacon','uptown-coldspring','harlem-brewster']}
+      {label:'NYC Subway',  keys:['bushwick-les','wburg-midtown','greenpt-carrollgdns']},
+      {label:'Metro-North', keys:['midtown-tarrytown','midtown-beacon','uptown-coldspring','harlem-brewster']},
+      {label:'NJ Transit',  keys:['chelsea-longbranch','les-princeton','chelsea-asburypark','midtown-somerville']}
     ]
   };
 })();}catch(e){console.error('NYC data build failed:',e);}
@@ -903,7 +940,9 @@ function mergeLegs(legs){
 let METRO_FARE=2.90, METRO_FARE_NAME='SEPTA Metro'; /* overridden by loadCity() */
 const RR_ZONE_FARE={CC:0,Z1:5.25,Z2:5.75,Z3:7.50,Z4:10.00,Z5:12.00, /* SEPTA RR weekday, ESTIMATED */
   /* Metro-North off-peak one-way, ESTIMATED (mta.info) */
-  MN0:0,MN1:8.75,MN2:10.75,MN3:13.50,MN4:15.50,MN5:17.75,MN6:20.00,MN7:22.50};
+  MN0:0,MN1:8.75,MN2:10.75,MN3:13.50,MN4:15.50,MN5:17.75,MN6:20.00,MN7:22.50,
+  /* NJ Transit off-peak one-way from NY Penn, ESTIMATED (njtransit.com) */
+  NJT0:0,NJT1:5.50,NJT2:8.75,NJT3:9.50,NJT4:11.25,NJT5:13.75,NJT6:14.75,NJT7:16.00,NJT8:17.00};
 /* Zone assignments for every RR station — ESTIMATED, marked ~ in UI */
 const RR_ZONES={
   /* Center City — included in any ticket */
@@ -957,6 +996,11 @@ const RR_ZONES={
   /* Metro-North Harlem Line — ESTIMATED zones */
   mna_125:'MN1',mna_whiteplains:'MN4',mna_nwhiteplains:'MN4',
   mna_pleasantville:'MN5',mna_chappaqua:'MN5',mna_katonah:'MN6',mna_brewster:'MN7',
+  /* NJ Transit — ESTIMATED zones (off-peak from NY Penn) */
+  nyp:'NJT0',newark_njt:'NJT1',
+  nec_metropark:'NJT2',nec_newbruns:'NJT3',nec_princeton:'NJT5',nec_hamilton:'NJT5',nec_trenton:'NJT6',
+  njc_rahway:'NJT2',njc_longbranch:'NJT6',njc_asburypark:'NJT7',njc_bayhead:'NJT8',
+  rvl_westfield:'NJT2',rvl_plainfield:'NJT3',rvl_somerville:'NJT4',rvl_highbridge:'NJT6',
 };
 const PGRP={p1516:'PHL',p1213:'PHL',p910:'PHL',p8:'PHL',pfrank:'PHL',
   pchcam:'CAM',pbway:'CAM',pferry:'FER',pcoll:'MID',pwest:'MID',phadd:'MID',
