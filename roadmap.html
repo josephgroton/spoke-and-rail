@@ -56,13 +56,45 @@
     .page{padding:24px 16px 40px}
     .item{gap:10px}
   }
+
+  /* ---- password gate ---- */
+  #gate{position:fixed;inset:0;background:var(--paper);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px}
+  #gate-box{border:2px solid var(--line);background:var(--panel);padding:36px 32px;max-width:360px;width:100%}
+  #gate-box h2{font-family:var(--display);font-size:20px;font-weight:700;text-transform:lowercase;margin-bottom:8px}
+  #gate-box p{font-size:13px;color:var(--dim);margin-bottom:20px;line-height:1.55}
+  #gate-input{width:100%;font-family:var(--mono);font-size:14px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 10px;border-radius:0;outline:none;margin-bottom:10px}
+  #gate-input:focus{border-color:var(--bike)}
+  #gate-btn{width:100%;font-family:var(--body);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border:1px solid var(--line);background:var(--ink);color:#fff;padding:9px;cursor:pointer;border-radius:0}
+  #gate-btn:hover{background:#333}
+  #gate-err{font-size:12px;color:var(--bad);margin-top:8px;display:none}
 </style>
 </head>
 <body>
+<div id="gate">
+  <div id="gate-box">
+    <h2>Spoke <span style="color:var(--bike)">&amp;</span> Rail — Roadmap</h2>
+    <p>This page is for collaborators. Enter the password to continue.</p>
+    <input id="gate-input" type="password" placeholder="password" autocomplete="off">
+    <button id="gate-btn" onclick="checkPw()">Enter</button>
+    <div id="gate-err">Incorrect password.</div>
+  </div>
+</div>
+<script>
+  (function(){
+    if(sessionStorage.getItem('srRoadmap')==='ok')document.getElementById('gate').style.display='none';
+  })();
+  function checkPw(){
+    const v=document.getElementById('gate-input').value;
+    if(v==='railbird'){sessionStorage.setItem('srRoadmap','ok');document.getElementById('gate').style.display='none';}
+    else{const e=document.getElementById('gate-err');e.style.display='block';document.getElementById('gate-input').value='';document.getElementById('gate-input').focus();}
+  }
+  document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});
+</script>
 <header>
   <h1>Spoke <span class="amp">&amp;</span> Rail</h1>
   <nav>
     <a href="index.html">Map</a>
+    <a href="about.html">About</a>
     <a href="roadmap.html" class="active">Roadmap</a>
   </nav>
 </header>
@@ -189,10 +221,10 @@
     </div>
 
     <div class="item">
-      <span class="badge idea">Idea</span>
+      <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">Live bikeshare availability (GBFS feeds)</div>
-        <div class="item-desc">Pull real-time dock counts from Citi Bike, Indego, and Bluebikes GBFS endpoints. Currently all docks are hardcoded static locations. Would let the router surface "no bikes available at this dock" before the user shows up.</div>
+        <div class="item-title">Live Indego availability (GBFS feed)</div>
+        <div class="item-desc">Pulls real-time dock counts from the Indego GBFS feed on load. Map markers color-code by bikes available (green 5+, amber 1–4, red 0). The Indego route card shows the pickup dock's live count inline. Full live dock network (~170 stations) replaces the 13 hardcoded sample docks.</div>
       </div>
     </div>
   </div>

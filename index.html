@@ -122,6 +122,14 @@
   .rd-addr-row b{font-family:var(--mono);font-size:10px;color:#fff;background:var(--ink);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
   .rd-fares{margin-top:14px;border-top:1px solid var(--panel2);padding-top:10px;font-size:12px;color:var(--dim);line-height:1.7}
   .rd-fares b{color:var(--text)}
+  /* ---------- prototype banner ---------- */
+  #proto-banner{background:var(--panel2);border-bottom:2px solid var(--line);padding:14px 18px;display:flex;align-items:flex-start;gap:12px}
+  #proto-banner.hidden{display:none}
+  .proto-label{font-family:var(--mono);font-size:22px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text);flex-shrink:0;line-height:1.1}
+  .proto-text{font-size:11px;color:var(--dim);line-height:1.6;flex:1}
+  .proto-text b{color:var(--text)}
+  #proto-close{background:none;border:none;font-size:18px;color:var(--faint);cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+  #proto-close:hover{color:var(--text)}
   /* ---------- prototype note overlay ---------- */
   .proto-note{position:absolute;bottom:38px;right:8px;z-index:800;font-size:10px;color:var(--ink);line-height:1.5;max-width:260px;text-align:right;opacity:0.32;pointer-events:none}
   @media (max-width:760px){
@@ -140,10 +148,18 @@
     <header>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <h1>Spoke <span class="amp">&amp;</span> Rail</h1>
-        <a href="roadmap.html" style="font-family:var(--body);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-decoration:none;border:1px solid var(--line);padding:4px 10px;background:var(--panel2);white-space:nowrap">Roadmap →</a>
+        <div style="display:flex;gap:0;border:1px solid var(--line);flex-shrink:0">
+          <a href="about.html" style="font-family:var(--body);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-decoration:none;padding:4px 10px;background:var(--panel2);border-right:1px solid var(--line);white-space:nowrap">About</a>
+          <a href="roadmap.html" style="font-family:var(--body);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-decoration:none;padding:4px 10px;background:var(--panel2);white-space:nowrap">Roadmap</a>
+        </div>
       </div>
       <p id="appDesc">Multimodal router that treats the bike as a first-class transit leg. Compares four ways to make the same trip across SEPTA + PATCO.</p>
     </header>
+    <div id="proto-banner">
+      <div class="proto-label">PROTO<br>TYPE</div>
+      <div class="proto-text"><b>Early prototype — not for navigation.</b> Fares marked ~ are estimated. Transit times use average headways, not live schedules. Bike-aboard rules are real but verify before a time-sensitive trip.</div>
+      <button id="proto-close" onclick="dismissProto()" title="Dismiss">×</button>
+    </div>
     <div id="controls">
       <div class="row" style="margin-bottom:6px">
         <label class="ptitle" style="white-space:nowrap">City</label>
@@ -1603,6 +1619,11 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/spoke-and-rail/sw.js')
     .catch(err=>console.warn('SW registration failed:',err));
 }
+function dismissProto(){
+  localStorage.setItem('srProtoDismissed','1');
+  document.getElementById('proto-banner').classList.add('hidden');
+}
+if(localStorage.getItem('srProtoDismissed')==='1')document.getElementById('proto-banner').classList.add('hidden');
 </script>
 </body>
 </html>
