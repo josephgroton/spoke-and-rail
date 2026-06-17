@@ -1076,8 +1076,11 @@ function drawNetwork(){
       .addTo(networkLayer).bindTooltip(`${s.name} — ${s.lines.map(l=>LINES[l]?.name||l).join(' / ')}`);
   }
   for(const dk of DOCKS){
-    L.marker([dk.lat,dk.lng],{icon:L.divIcon({className:'',html:'<div class="dock-ic" style="width:8px;height:8px;background:#12a37a"></div>',iconSize:[8,8],iconAnchor:[4,4]}),keyboard:false,pane:'network'})
-      .addTo(networkLayer).bindTooltip(dk.name);
+    const av=dk.bikes_available;
+    const dkC=av==null?'#12a37a':av>=5?'#12a37a':av>0?'#c4830a':'#b52020';
+    const dkTip=av!=null?`${dk.name} — ${av} bike${av!==1?'s':''} available`:dk.name;
+    L.marker([dk.lat,dk.lng],{icon:L.divIcon({className:'',html:`<div class="dock-ic" style="width:8px;height:8px;background:${dkC}"></div>`,iconSize:[8,8],iconAnchor:[4,4]}),keyboard:false,pane:'network'})
+      .addTo(networkLayer).bindTooltip(dkTip);
   }
   for(const bw of BIKEWAYS){
     L.polyline(bw.coords,{color:'#2d7a3a',weight:2.5,opacity:0.55,dashArray:'5 5',interactive:true,pane:'network'})
@@ -1086,6 +1089,28 @@ function drawNetwork(){
 }
 drawNetwork();
 patchGTFS(); /* apply real SEPTA coords + segment times + headways on initial load */
+async function loadIndegoLive(){
+  try{
+    const disc=await fetch('https://gbfs.bcycle.com/bcycle_indego/gbfs.json').then(r=>r.json());
+    const feeds=disc.data?.en?.feeds||disc.data?.feeds||[];
+    const infoUrl=feeds.find(f=>f.name==='station_information')?.url;
+    const statusUrl=feeds.find(f=>f.name==='station_status')?.url;
+    if(!infoUrl||!statusUrl)return;
+    const [info,stat]=await Promise.all([fetch(infoUrl).then(r=>r.json()),fetch(statusUrl).then(r=>r.json())]);
+    const stMap={};
+    for(const s of stat.data.stations)stMap[s.station_id]=s;
+    const live=info.data.stations.map(s=>({
+      id:'gbfs_'+s.station_id,name:s.name,lat:s.lat,lng:s.lon,
+      bikes_available:stMap[s.station_id]?.num_bikes_available??null,
+      docks_available:stMap[s.station_id]?.num_docks_available??null,
+      is_renting:!!stMap[s.station_id]?.is_renting
+    }));
+    DOCKS=live; PHILLY_DATA.DOCKS=live;
+    drawNetwork();
+    if(typeof A!=='undefined'&&A&&B)compute();
+  }catch(e){}
+}
+loadIndegoLive();
 function loadCity(key){
   const cd=key==='boston'?window.BOSTON_DATA:key==='nyc'?window.NYC_DATA:(window.PHILLY_DATA||PHILLY_DATA);
   if(!cd){console.error('No city data for',key);return;}
@@ -1462,7 +1487,16 @@ function card(sc,r,base){
       if(dep!==null)depLine=`<div class="dep">Board <b>${LINES[transit.line].name}</b> at <b>${fmtHHMM(dep)}</b></div>`;
     }
   }
-  return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${fmtMin(r.min)}</div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}</div>${depLine}</div>`;
+  let availHint='';
+  if(sc.id==='indego'){
+    const iLeg=r.legs.find(l=>l.mode==='bike'&&l.indego);
+    const pk=iLeg?.from;
+    if(pk?.bikes_available!=null){
+      const n=pk.bikes_available;
+      availHint=n>0?` · ${n} bike${n!==1?'s':''} at pickup`:` · <span style="color:var(--bad)">no bikes at pickup</span>`;
+    }
+  }
+  return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${fmtMin(r.min)}</div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}${availHint}</div>${depLine}</div>`;
 }
 function intercityCard(trip){
   const peak=$('peak').checked;
