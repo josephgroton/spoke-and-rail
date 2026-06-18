@@ -110,6 +110,7 @@
   .stn-ic{border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
   .dock-ic{border-radius:2px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
   .cluster-ic{width:26px;height:26px;background:var(--ink);color:#fff;font-family:var(--body);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.6);}
+  #leaveNow.active{background:var(--ink);color:#fff;border-color:var(--ink);}
   .ab-ic{display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ink);color:#fff;font:700 12px/1 var(--mono);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
   /* ---------- route detail panel ---------- */
   .rd-panel{position:absolute;left:0;top:0;bottom:0;width:320px;background:var(--panel);border-right:2px solid var(--line);z-index:900;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform .22s cubic-bezier(.4,0,.2,1);pointer-events:none}
@@ -141,7 +142,8 @@
     #side{width:100%;min-width:0;max-height:62%;order:2;overflow-y:auto;display:block}
     #map{order:1;min-height:38%}
     header p{display:none}
-    .rd-panel{display:none}
+    .rd-panel{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;height:78vh;transform:translateY(110%);border-right:none;border-top:2px solid var(--line);box-shadow:0 -4px 24px rgba(0,0,0,.28);}
+    .rd-panel.open{transform:translateY(0);}
   }
   @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
@@ -188,10 +190,10 @@
           <div class="ep"><b>B</b><input type="text" id="bInput" placeholder="Destination" autocomplete="off" spellcheck="false" aria-label="Destination" aria-autocomplete="list" aria-controls="bSugg"></div>
           <ul class="suggestions" id="bSugg" role="listbox"></ul>
         </div>
-        <div class="ep" style="gap:8px;padding:5px 9px">
+        <div class="ep" style="gap:8px;padding:5px 9px;flex-wrap:wrap">
+          <button id="leaveNow" style="background:none;border:1px solid var(--line);color:var(--dim);font-family:var(--body);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;cursor:pointer;line-height:1.4;white-space:nowrap;border-radius:0">Leave now</button>
           <span style="font-family:var(--display);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.11em;color:var(--faint);white-space:nowrap">Arrive by</span>
-          <button id="nowDepart" style="background:none;border:1px solid var(--line);color:var(--dim);font-family:var(--body);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 6px;cursor:pointer;line-height:1.4;white-space:nowrap" title="Set to now">now</button>
-          <input type="time" id="departInput" style="flex:1;background:transparent;border:none;outline:none;font:13px var(--body);color:var(--text);min-width:0;padding:0" aria-label="Arrival time">
+          <input type="time" id="departInput" style="flex:1;background:transparent;border:none;outline:none;font:13px var(--body);color:var(--text);min-width:80px;padding:0" aria-label="Arrival time">
           <button id="clearDepart" style="background:none;border:none;color:var(--faint);font-size:14px;padding:0 2px;cursor:pointer;line-height:1" title="Clear">×</button>
         </div>
       </div>
@@ -1123,7 +1125,7 @@ function drawNetwork(){
     const c=LINES[s.lines[0]]?.color||'#888';
     const sz=s.lines.length>1?11:9;
     L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:`<div class="stn-ic" style="width:${sz}px;height:${sz}px;background:${c}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]}),keyboard:false,pane:'network'})
-      .addTo(markerLayer).bindTooltip(`${s.name}  -  ${s.lines.map(l=>LINES[l]?.name||l).join(' / ')}`);
+      .addTo(networkLayer).bindTooltip(`${s.name}  -  ${s.lines.map(l=>LINES[l]?.name||l).join(' / ')}`);
   }
   for(const dk of DOCKS){
     const av=dk.bikes_available;
@@ -1312,9 +1314,9 @@ $('profHead').addEventListener('click',()=>{
 });
 for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{compute();setTimeout(collapseProf,350);});
 $('bikeMax').addEventListener('change',compute);
-$('departInput').addEventListener('change',()=>{parseArriveMin();compute();});
-$('clearDepart').addEventListener('click',()=>{$('departInput').value='';ARRIVE_MIN=null;SCHED_START=null;compute();});
-$('nowDepart').addEventListener('click',()=>{const n=new Date();$('departInput').value=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;parseArriveMin();compute();});
+$('departInput').addEventListener('change',()=>{LEAVE_NOW=false;$('leaveNow').classList.remove('active');parseArriveMin();compute();});
+$('clearDepart').addEventListener('click',()=>{$('departInput').value='';ARRIVE_MIN=null;SCHED_START=null;LEAVE_NOW=false;$('leaveNow').classList.remove('active');compute();});
+$('leaveNow').addEventListener('click',()=>{LEAVE_NOW=!LEAVE_NOW;if(LEAVE_NOW){$('departInput').value='';ARRIVE_MIN=null;}$('leaveNow').classList.toggle('active',LEAVE_NOW);compute();});
 /* ── GTFS integration ────────────────────────────────────────────────── */
 function patchGTFS(){
   const gtfs=window.SEPTA_GTFS;if(!gtfs)return;
@@ -1347,7 +1349,8 @@ function nextDep(stationId,lineId,afterMin){
 }
 /* Parse HH:MM time input → minutes from midnight */
 let ARRIVE_MIN=null;  /* desired arrival time in minutes from midnight; null = use average headways */
-let SCHED_START=null; /* effective departure, computed as ARRIVE_MIN - estimated route time */
+let SCHED_START=null; /* effective departure, computed from ARRIVE_MIN or set directly by Leave Now */
+let LEAVE_NOW=false;  /* when true, use current clock time as departure */
 function parseArriveMin(){
   const v=document.getElementById('departInput').value;
   if(!v){ARRIVE_MIN=null;SCHED_START=null;return;}
@@ -1480,8 +1483,9 @@ function compute(){
     selectIntercity(intercityTrip);
     return;
   }
-  /* Two-pass arrive-by: estimate departure = arrive time - headway-only route time */
-  if(ARRIVE_MIN!==null){
+  /* Scheduling: Leave now = current clock; Arrive by = two-pass back-calculation */
+  if(LEAVE_NOW){const n=new Date();SCHED_START=n.getHours()*60+n.getMinutes();}
+  else if(ARRIVE_MIN!==null){
     SCHED_START=null;
     const rough=route('baseline',peak,A,B);
     SCHED_START=rough?Math.max(0,ARRIVE_MIN-Math.round(rough.min)):ARRIVE_MIN;
@@ -1535,13 +1539,15 @@ function card(sc,r,base){
   const costChip=`<span class="cost" title="${tc.items.join(' + ')||'no fares'}">${tc.cost===0?'$0':(tc.est?'~':'')+'$'+tc.cost.toFixed(2)}</span>`;
   /* departure chip  -  show next real train time if user set a depart-at time */
   let depLine='';
-  if(ARRIVE_MIN!==null&&SCHED_START!==null&&r){
+  if(SCHED_START!==null&&r){
     const transit=r.legs.find(l=>l.mode==='ride'&&l.line);
     if(transit){
       const walkBike=r.legs.slice(0,r.legs.indexOf(transit)).reduce((s,l)=>s+l.min,0);
-      const atPlatform=SCHED_START+walkBike;
-      const dep=nextDep(transit.from?.id||transit.board,transit.line,atPlatform);
-      if(dep!==null)depLine=`<div class="dep">Board <b>${LINES[transit.line].name}</b> at <b>${fmtHHMM(dep)}</b> · arrive by <b>${fmtHHMM(ARRIVE_MIN)}</b></div>`;
+      const dep=nextDep(transit.from?.id||transit.board,transit.line,SCHED_START+walkBike);
+      if(dep!==null){
+        const arrStr=ARRIVE_MIN!==null?` · arrive by <b>${fmtHHMM(ARRIVE_MIN)}</b>`:'';
+        depLine=`<div class="dep">Board <b>${LINES[transit.line].name}</b> at <b>${fmtHHMM(dep)}</b>${arrStr}</div>`;
+      }
     }
   }
   let availHint='';
