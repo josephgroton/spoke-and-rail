@@ -111,6 +111,14 @@
   .dock-ic{border-radius:2px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
   .cluster-ic{width:26px;height:26px;background:var(--ink);color:#fff;font-family:var(--body);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.6);}
   #leaveNow.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  #pm-overlay{display:none;position:fixed;inset:0;background:rgba(24,20,15,.45);z-index:1090;}
+  #pm-overlay.open{display:block;}
+  #profile-modal{position:fixed;top:0;bottom:0;left:0;width:min(390px,100vw);background:var(--panel);border-right:2px solid var(--line);z-index:1100;display:flex;flex-direction:column;transform:translateX(-105%);transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:4px 0 20px rgba(0,0,0,.18);}
+  #profile-modal.open{transform:translateX(0);}
+  .pm-head{padding:16px 18px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .pm-title{font-family:var(--display);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
+  .pm-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--dim);line-height:1;padding:4px 7px}
+  .pm-body{padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
   .ab-ic{display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--ink);color:#fff;font:700 12px/1 var(--mono);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
   /* ---------- route detail panel ---------- */
   .rd-panel{position:absolute;left:0;top:0;bottom:0;width:320px;background:var(--panel);border-right:2px solid var(--line);z-index:900;display:flex;flex-direction:column;box-shadow:4px 0 20px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform .22s cubic-bezier(.4,0,.2,1);pointer-events:none}
@@ -155,6 +163,7 @@
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <h1>Velorail</h1>
         <div style="display:flex;gap:0;border:1px solid var(--line);flex-shrink:0">
+          <button onclick="openProfile()" style="font-family:var(--body);font-size:14px;font-weight:700;background:var(--panel2);border:none;border-right:1px solid var(--line);color:var(--dim);padding:4px 11px;cursor:pointer;line-height:1.3" title="Rider profile">≡</button>
           <a href="about.html" style="font-family:var(--body);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-decoration:none;padding:4px 10px;background:var(--panel2);border-right:1px solid var(--line);white-space:nowrap">About</a>
           <a href="roadmap.html" style="font-family:var(--body);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);text-decoration:none;padding:4px 10px;background:var(--panel2);white-space:nowrap">Roadmap</a>
         </div>
@@ -197,26 +206,6 @@
           <button id="clearDepart" style="background:none;border:none;color:var(--faint);font-size:14px;padding:0 2px;cursor:pointer;line-height:1" title="Clear">×</button>
         </div>
       </div>
-      <div class="prof" id="prof">
-        <div class="prof-head" id="profHead">
-          <div class="ptitle">Rider profile</div>
-          <span id="profSum" class="prof-sum"></span>
-          <span class="prof-chev"></span>
-        </div>
-        <div class="prof-body" id="profBody">
-          <label class="pt"><input type="checkbox" id="hasBike" checked> I have a personal bike</label>
-          <label class="pt" style="margin-left:22px"><input type="checkbox" id="carryOK" checked> …and I'm willing to take it aboard transit</label>
-          <label class="pt" id="bikeMaxRow" style="margin-left:22px">Show bike-only option up to <input type="number" id="bikeMax" min="1" max="50" value="8" style="width:44px;padding:2px 5px;font-size:13px;border:1px solid var(--line);background:var(--panel2);color:var(--text)"> mi</label>
-          <label class="pt">Indego bikeshare:&nbsp;
-            <select id="indegoPlan" style="flex:1">
-              <option value="payg">pay per ride  -  $4.50 / 30 min</option>
-              <option value="member">member  -  Indego30/365, rides included</option>
-              <option value="none">don't use Indego</option>
-            </select>
-          </label>
-        </div>
-      </div>
-      <label class="pt"><input type="checkbox" id="peak"> <span id="peakLabel">Peak hours (weekday 6–9a inbound / 3–6p outbound)  -  SEPTA bars bikes on inbound trains AM and outbound trains PM; PATCO always allows bikes</span></label>
       <div class="hint" id="networkHint">Type to search  -  pick a suggestion or press Enter. You can also click the map. Network: all SEPTA Regional Rail lines, MFL, BSL, PATCO, surface trolleys, and sample Indego docks.</div>
     </div>
     <div id="results"><div class="hint" style="padding-top:4px">Pick an example trip or set two points on the map.</div></div>
@@ -1098,6 +1087,16 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
 map.createPane('network');
 map.getPane('network').style.zIndex='350'; /* below route polylines (overlayPane=400) */
 let networkLayer=L.layerGroup().addTo(map);
+const STNZ=[9,11,13]; /* min zoom per station tier: 0=major hubs, 1=RR/PATCO, 2=metro stops */
+let stationLayers=[0,1,2].map(()=>L.layerGroup());
+function updateStationLayerVisibility(){
+  const z=map.getZoom();
+  stationLayers.forEach((l,i)=>{
+    if(z>=STNZ[i]&&!map.hasLayer(l))l.addTo(map);
+    else if(z<STNZ[i]&&map.hasLayer(l))map.removeLayer(l);
+  });
+}
+map.on('zoomend',updateStationLayerVisibility);
 let markerLayer=L.markerClusterGroup({
   pane:'network',clusterPane:'network',
   maxClusterRadius:45,showCoverageOnHover:false,disableClusteringAtZoom:15,
@@ -1115,6 +1114,7 @@ function dimmNetwork(){const p=map.getPane('network');if(p)p.style.opacity='0.07
 function restoreNetwork(){const p=map.getPane('network');if(p)p.style.opacity='';}
 function drawNetwork(){
   networkLayer.clearLayers(); markerLayer.clearLayers(); dockLayer.clearLayers();
+  stationLayers.forEach(l=>l.clearLayers());
   for(const [ln,ids] of Object.entries(SEQ)){
     L.polyline(ids.map(id=>[STATIONS[id].lat,STATIONS[id].lng]),
       {color:LINES[ln].color,weight:LINES[ln].rr?2:3,opacity:LINES[ln].rr?.45:.55,pane:'network'}).addTo(networkLayer);
@@ -1124,8 +1124,9 @@ function drawNetwork(){
     if(drawn.has(id))continue; drawn.add(id);
     const c=LINES[s.lines[0]]?.color||'#888';
     const sz=s.lines.length>1?11:9;
+    const tier=s.lines.length>1?0:(LINES[s.lines[0]]?.metro?2:1);
     L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:`<div class="stn-ic" style="width:${sz}px;height:${sz}px;background:${c}"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]}),keyboard:false,pane:'network'})
-      .addTo(networkLayer).bindTooltip(`${s.name}  -  ${s.lines.map(l=>LINES[l]?.name||l).join(' / ')}`);
+      .addTo(stationLayers[tier]).bindTooltip(`${s.name}  -  ${s.lines.map(l=>LINES[l]?.name||l).join(' / ')}`);
   }
   for(const dk of DOCKS){
     const av=dk.bikes_available;
@@ -1139,7 +1140,7 @@ function drawNetwork(){
       .addTo(networkLayer).bindTooltip(bw.name,{sticky:true});
   }
 }
-drawNetwork();updateDockVisibility();
+drawNetwork();updateDockVisibility();updateStationLayerVisibility();
 patchGTFS(); /* apply real SEPTA coords + segment times + headways on initial load */
 async function loadIndegoLive(){
   try{
@@ -1158,7 +1159,7 @@ async function loadIndegoLive(){
       is_renting:!!stMap[s.station_id]?.is_renting
     }));
     DOCKS=live; PHILLY_DATA.DOCKS=live;
-    drawNetwork();updateDockVisibility();
+    drawNetwork();updateDockVisibility();updateStationLayerVisibility();
     if(typeof A!=='undefined'&&A&&B)compute();
   }catch(e){}
 }
@@ -1170,7 +1171,7 @@ function loadCity(key){
   TRANSFERS=cd.TRANSFERS; DOCKS=cd.DOCKS; BIKEWAYS=cd.BIKEWAYS; PRESETS=cd.PRESETS;
   METRO_FARE=cd.METRO_FARE; METRO_FARE_NAME=cd.FARE_NAME;
   CITY_VIEWBOX=cd.viewbox;
-  drawNetwork();updateDockVisibility();
+  drawNetwork();updateDockVisibility();updateStationLayerVisibility();
   if(!key||key==='philly')patchGTFS();
   map.setView(cd.center,cd.zoom);
   /* update static text */
@@ -1294,26 +1295,8 @@ $('bInput').addEventListener('keydown',e=>{
 });
 $('aInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('aSugg'),150));
 $('bInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('bSugg'),150));
-$('peak').addEventListener('change',compute);
-function profSummary(){
-  readProfile();
-  const parts=[];
-  if(PROF.hasBike)parts.push(PROF.carryOK?'bike + carry':'bike, no carry');
-  else parts.push('no bike');
-  parts.push(PROF.indego==='member'?'indego member':PROF.indego==='payg'?'indego pay/ride':'no indego');
-  return parts.join(' · ');
-}
-function collapseProf(){
-  $('profSum').textContent=profSummary();
-  $('prof').classList.add('collapsed');
-}
-$('profHead').addEventListener('click',()=>{
-  const wasCollapsed=$('prof').classList.contains('collapsed');
-  $('prof').classList.toggle('collapsed');
-  if(!wasCollapsed)$('profSum').textContent=profSummary();
-});
-for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{compute();setTimeout(collapseProf,350);});
-$('bikeMax').addEventListener('change',compute);
+for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{saveProfile();compute();});
+$('bikeMax').addEventListener('change',()=>{saveProfile();compute();});
 $('departInput').addEventListener('change',()=>{LEAVE_NOW=false;$('leaveNow').classList.remove('active');parseArriveMin();compute();});
 $('clearDepart').addEventListener('click',()=>{$('departInput').value='';ARRIVE_MIN=null;SCHED_START=null;LEAVE_NOW=false;$('leaveNow').classList.remove('active');compute();});
 $('leaveNow').addEventListener('click',()=>{LEAVE_NOW=!LEAVE_NOW;if(LEAVE_NOW){$('departInput').value='';ARRIVE_MIN=null;}$('leaveNow').classList.toggle('active',LEAVE_NOW);compute();});
@@ -1356,6 +1339,30 @@ function parseArriveMin(){
   if(!v){ARRIVE_MIN=null;SCHED_START=null;return;}
   const[h,m]=v.split(':').map(Number);ARRIVE_MIN=h*60+m;
 }
+function loadProfile(){
+  try{
+    const s=JSON.parse(localStorage.getItem('vrProfile'));
+    if(!s)return;
+    if(s.hasBike!==undefined)$('hasBike').checked=s.hasBike;
+    if(s.carryOK!==undefined)$('carryOK').checked=s.carryOK;
+    if(s.indego)$('indegoPlan').value=s.indego;
+    if(s.bikeMax)$('bikeMax').value=s.bikeMax;
+  }catch(e){}
+}
+function saveProfile(){
+  localStorage.setItem('vrProfile',JSON.stringify({
+    hasBike:$('hasBike').checked,carryOK:$('carryOK').checked,
+    indego:$('indegoPlan').value,bikeMax:parseFloat($('bikeMax').value)||8
+  }));
+}
+function openProfile(){
+  document.getElementById('profile-modal').classList.add('open');
+  document.getElementById('pm-overlay').classList.add('open');
+}
+function closeProfile(){
+  document.getElementById('profile-modal').classList.remove('open');
+  document.getElementById('pm-overlay').classList.remove('open');
+}
 function clearRoutes(){routeLayers.forEach(l=>l.remove());routeLayers=[];hideDetail();}
 function hideDetail(){const p=document.getElementById('routeDetail');if(p)p.classList.remove('open');restoreNetwork();}
 function showDetail(scId){
@@ -1372,7 +1379,7 @@ function showDetail(scId){
   const costChip=tc.cost===0?'$0':(tc.est?'~':'')+'$'+tc.cost.toFixed(2);
   let html=`<div class="rd-head">
     <div class="rd-name">${sc.name}</div>
-    <div class="rd-meta"><span class="cost" title="${tc.items.join(' + ')||'no fares'}">${costChip}</span><span class="rd-bigtime">${fmtMin(r.min)}</span>${dTxt}</div>
+    <div class="rd-meta"><span class="cost" title="${tc.items.join(' + ')||'no fares'}">${costChip}</span><span class="rd-bigtime">${fmtMin(r.min)}</span></div>
     <button class="rd-close" onclick="hideDetail()">×</button>
   </div><div class="rd-body">`;
   if(A&&B){
@@ -1472,10 +1479,15 @@ function fetchCarRoute(A,B){
     })
     .catch(()=>{});
 }
+function isPeak(){
+  const t=SCHED_START??ARRIVE_MIN??(()=>{const n=new Date();return n.getHours()*60+n.getMinutes();})();
+  const h=Math.floor(t/60)%24;
+  return (h>=6&&h<9)||(h>=15&&h<18);
+}
 function compute(){
   if(!A||!B)return;
   readProfile();
-  const peak=$('peak').checked;
+  const peak=isPeak();
   itins={};clearRoutes();
   if(intercityTrip){
     $('results').innerHTML=intercityCard(intercityTrip);
@@ -1510,6 +1522,7 @@ function compute(){
     return ra.min-rb.min;
   });
   let html='';
+  if(peak)html+=`<div class="note" style="color:var(--bad);border-color:rgba(181,32,32,.3)">Peak hours: SEPTA bars bikes on Metro and Regional Rail. Carry options may be unavailable.</div>`;
   for(const sc of sorted) html+=card(sc,itins[sc.id],base);
   if(PROF.hasBike&&hav(A,B)*CIRCUITY>PROF.bikeMax)
     html+=`<div class="note">Bike-only not shown: ${(hav(A,B)*CIRCUITY).toFixed(1)} mi exceeds your ${PROF.bikeMax} mi max. Adjust in rider profile to see it.</div>`;
@@ -1657,7 +1670,12 @@ function select(scId){
       }
     }
   }
-  if(selPts.length>1)map.fitBounds(selPts,{padding:[40,40]});
+  if(selPts.length>1){
+    const mobile=window.innerWidth<=760;
+    map.fitBounds(selPts,mobile
+      ?{paddingTopLeft:[30,30],paddingBottomRight:[30,340]}
+      :{paddingTopLeft:[350,50],paddingBottomRight:[60,50]});
+  }
   showDetail(scId);
 }
 </script>
@@ -1671,6 +1689,28 @@ function dismissProto(){
   document.getElementById('proto-banner').classList.add('hidden');
 }
 if(localStorage.getItem('srProtoDismissed')==='1')document.getElementById('proto-banner').classList.add('hidden');
+else setTimeout(dismissProto,7000);
+loadProfile();
 </script>
+<div id="pm-overlay" onclick="closeProfile()"></div>
+<div id="profile-modal">
+  <div class="pm-head">
+    <span class="pm-title">Rider profile</span>
+    <button class="pm-close" onclick="closeProfile()">×</button>
+  </div>
+  <div class="pm-body">
+    <label class="pt"><input type="checkbox" id="hasBike" checked> I have a personal bike</label>
+    <label class="pt" style="margin-left:22px"><input type="checkbox" id="carryOK" checked> ...and I'm willing to take it aboard transit</label>
+    <label class="pt" id="bikeMaxRow" style="margin-left:22px">Show bike-only option up to <input type="number" id="bikeMax" min="1" max="50" value="8" style="width:44px;padding:2px 5px;font-size:13px;border:1px solid var(--line);background:var(--panel2);color:var(--text)"> mi</label>
+    <label class="pt">Indego bikeshare:
+      <select id="indegoPlan" style="flex:1;margin-top:4px">
+        <option value="payg">pay per ride - $4.50 / 30 min</option>
+        <option value="member">member - Indego30/365, rides included</option>
+        <option value="none">don't use Indego</option>
+      </select>
+    </label>
+    <div class="hint" style="margin-top:8px">Your profile is saved automatically and remembered next visit.</div>
+  </div>
+</div>
 </body>
 </html>
