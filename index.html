@@ -1810,20 +1810,43 @@ function parseBrouterSteps(msgs){
   return steps;
 }
 
-/* ── Bike routing: ORS cycling-safe → BRouter safety fallback ─────────────
-   ORS hard-avoids arterials without bike infrastructure.
-   BRouter safety is used as geometry + TBT fallback if ORS is absent/fails. */
+/* ── Bike routing ──────────────────────────────────────────────────────────
+   Geometry:      ORS cycling-safe (avoids arterials w/o bike infra)
+                  → BRouter safety fallback if ORS absent/fails
+   Turn-by-turn:  OSRM routed-bike (same service as walk TBT, proven reliable)
+                  → tbtUnavailable message if OSRM fails                      */
 const clearTbt=legIdx=>{if(legIdx!=null)tbtUnavailable(legIdx);};
 
-function fetchBrouterTbt(from,to,legIdx,epoch){
-  const url=`https://brouter.de/brouter?lonlats=${from.lng},${from.lat}|${to.lng},${to.lat}&profile=safety&alternativeidx=0&format=geojson`;
-  fetch(url)
-    .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+/* OSRM step maneuver type+modifier → arrow icon */
+const OSRM_ICONS={
+  'turn left':'←','turn right':'→',
+  'turn sharp left':'↙','turn sharp right':'↘',
+  'turn slight left':'↖','turn slight right':'↗',
+  'new name left':'↖','new name right':'↗',
+  'fork left':'↖','fork right':'↗',
+  'end of road left':'↖','end of road right':'↗',
+  'roundabout':'↻','rotary':'↻','exit roundabout':'↻','exit rotary':'↻',
+  'u-turn':'↩',
+};
+function parseOsrmBikeSteps(steps){
+  return steps
+    .filter(s=>s.distance>10&&s.maneuver?.type!=='depart'&&s.maneuver?.type!=='arrive')
+    .map(s=>{
+      const t=(s.maneuver?.type||'').toLowerCase();
+      const m=(s.maneuver?.modifier||'').toLowerCase();
+      const icon=OSRM_ICONS[m?`${t} ${m}`:t]||OSRM_ICONS[t]||'↑';
+      const nm=(s.name||'').trim();
+      const street=nm&&!/^\d+$/.test(nm)?nm:m||t||'continue';
+      return {icon,street,distM:s.distance};
+    });
+}
+function fetchOsrmBikeTbt(from,to,legIdx,epoch){
+  fetch(`https://routing.openstreetmap.de/routed-bike/route/v1/bike/${from.lng},${from.lat};${to.lng},${to.lat}?overview=false&steps=true`)
+    .then(r=>r.json())
     .then(data=>{
       if(selEpoch!==epoch)return;
-      if(!data.features?.length){tbtUnavailable(legIdx);return;}
-      const steps=parseBrouterSteps(data.features[0].properties?.messages||[]);
-      renderTurnByTurn(legIdx,steps);
+      const steps=data.routes?.[0]?.legs?.[0]?.steps||[];
+      renderTurnByTurn(legIdx,parseOsrmBikeSteps(steps));
     })
     .catch(()=>tbtUnavailable(legIdx));
 }
@@ -1839,12 +1862,7 @@ function fetchBikeRoute(from,to,idx,epoch,opts,legIdx){
         const coords=data.features[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
         routeLayers[idx].remove();
         routeLayers[idx]=L.polyline(coords,opts).addTo(map);
-        if(legIdx!=null){
-          const steps=data.features[0].properties?.segments?.[0]?.steps||[];
-          const parsed=parseOrsSteps(steps);
-          if(parsed.length>0){renderTurnByTurn(legIdx,parsed);}
-          else{fetchBrouterTbt(from,to,legIdx,epoch);}
-        }
+        if(legIdx!=null)fetchOsrmBikeTbt(from,to,legIdx,epoch);
       })
       .catch(()=>fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx));
   } else {
