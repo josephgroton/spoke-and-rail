@@ -2,44 +2,104 @@
   <rect width="512" height="512" fill="#18140f"/>
 
   <!-- Rail ties -->
-  <g stroke="#0d8f6a" stroke-width="14" stroke-linecap="butt">
-    <line x1="30"  y1="366" x2="30"  y2="414"/>
-    <line x1="108" y1="366" x2="108" y2="414"/>
-    <line x1="186" y1="366" x2="186" y2="414"/>
-    <line x1="264" y1="366" x2="264" y2="414"/>
-    <line x1="342" y1="366" x2="342" y2="414"/>
-    <line x1="420" y1="366" x2="420" y2="414"/>
-    <line x1="498" y1="366" x2="498" y2="414"/>
+  <g stroke="#0d8f6a" stroke-width="13" stroke-linecap="butt">
+    <line x1="22"  y1="448" x2="22"  y2="490"/>
+    <line x1="92"  y1="448" x2="92"  y2="490"/>
+    <line x1="162" y1="448" x2="162" y2="490"/>
+    <line x1="232" y1="448" x2="232" y2="490"/>
+    <line x1="302" y1="448" x2="302" y2="490"/>
+    <line x1="372" y1="448" x2="372" y2="490"/>
+    <line x1="442" y1="448" x2="442" y2="490"/>
+    <line x1="512" y1="448" x2="512" y2="490"/>
   </g>
+  <!-- Rails — wheel bottom (cx±r, cy+r) touches top rail -->
+  <line x1="0" y1="456" x2="512" y2="456" stroke="#0d8f6a" stroke-width="9"/>
+  <line x1="0" y1="472" x2="512" y2="472" stroke="#0d8f6a" stroke-width="9"/>
 
-  <!-- Rails -->
-  <line x1="0" y1="374" x2="512" y2="374" stroke="#0d8f6a" stroke-width="10"/>
-  <line x1="0" y1="398" x2="512" y2="398" stroke="#0d8f6a" stroke-width="10"/>
-
-  <!-- Road bike — wheels sit on top rail (y=374), so center y = 374-78 = 296 -->
+  <!-- ── BIKE ── wheels: cx±88 from center, bottom at y=456 so cy=368 -->
   <g stroke="#faf6f0" fill="none" stroke-linecap="round" stroke-linejoin="round">
 
-    <!-- Wheels -->
-    <circle cx="148" cy="296" r="78" stroke-width="13"/>
-    <circle cx="364" cy="296" r="78" stroke-width="13"/>
+    <!-- REAR WHEEL cx=144 cy=368 r=88 -->
+    <circle cx="144" cy="368" r="88" stroke-width="11"/>
+    <!-- spokes: 12 at 30° intervals -->
+    <g stroke-width="2.5">
+      <line x1="144" y1="368" x2="220" y2="412"/>
+      <line x1="144" y1="368" x2="188" y2="444"/>
+      <line x1="144" y1="368" x2="144" y2="456"/>
+      <line x1="144" y1="368" x2="100" y2="444"/>
+      <line x1="144" y1="368" x2="68"  y2="412"/>
+      <line x1="144" y1="368" x2="56"  y2="368"/>
+      <line x1="144" y1="368" x2="68"  y2="324"/>
+      <line x1="144" y1="368" x2="100" y2="292"/>
+      <line x1="144" y1="368" x2="144" y2="280"/>
+      <line x1="144" y1="368" x2="188" y2="292"/>
+      <line x1="144" y1="368" x2="220" y2="324"/>
+      <line x1="144" y1="368" x2="232" y2="368"/>
+    </g>
+    <circle cx="144" cy="368" r="6" fill="#faf6f0" stroke="none"/>
 
-    <!-- Frame: BB=(256,318), seat-top=(220,166), head-top=(336,170), head-bot=(353,220) -->
-    <line x1="148" y1="296" x2="256" y2="318" stroke-width="9"/>   <!-- chain stay -->
-    <line x1="220" y1="166" x2="148" y2="296" stroke-width="9"/>   <!-- seat stay -->
-    <line x1="256" y1="318" x2="220" y2="166" stroke-width="11"/>  <!-- seat tube -->
-    <line x1="220" y1="166" x2="336" y2="170" stroke-width="11"/>  <!-- top tube -->
-    <line x1="336" y1="170" x2="353" y2="220" stroke-width="11"/>  <!-- head tube -->
-    <line x1="353" y1="220" x2="256" y2="318" stroke-width="11"/>  <!-- down tube -->
-    <line x1="353" y1="220" x2="364" y2="296" stroke-width="9"/>   <!-- fork -->
+    <!-- FRONT WHEEL cx=368 cy=368 r=88 -->
+    <circle cx="368" cy="368" r="88" stroke-width="11"/>
+    <g stroke-width="2.5">
+      <line x1="368" y1="368" x2="444" y2="412"/>
+      <line x1="368" y1="368" x2="412" y2="444"/>
+      <line x1="368" y1="368" x2="368" y2="456"/>
+      <line x1="368" y1="368" x2="324" y2="444"/>
+      <line x1="368" y1="368" x2="292" y2="412"/>
+      <line x1="368" y1="368" x2="280" y2="368"/>
+      <line x1="368" y1="368" x2="292" y2="324"/>
+      <line x1="368" y1="368" x2="324" y2="292"/>
+      <line x1="368" y1="368" x2="368" y2="280"/>
+      <line x1="368" y1="368" x2="412" y2="292"/>
+      <line x1="368" y1="368" x2="444" y2="324"/>
+      <line x1="368" y1="368" x2="456" y2="368"/>
+    </g>
+    <circle cx="368" cy="368" r="6" fill="#faf6f0" stroke="none"/>
 
-    <!-- Drop handlebars (attached at head-tube top) -->
-    <line x1="316" y1="170" x2="356" y2="170" stroke-width="8"/>   <!-- bar top -->
-    <line x1="316" y1="170" x2="294" y2="196" stroke-width="8"/>   <!-- left drop -->
-    <line x1="356" y1="170" x2="378" y2="196" stroke-width="8"/>   <!-- right drop -->
+    <!-- FRAME
+         BB        = (255, 390)
+         seat top  = (204, 216)   (73° seat tube from horiz)
+         head top  = (336, 224)
+         head bot  = (352, 270)   (72° head tube)
+    -->
+    <!-- chain stay: rear axle → BB -->
+    <line x1="144" y1="368" x2="255" y2="390" stroke-width="8"/>
+    <!-- seat stay: seat top → rear axle -->
+    <line x1="204" y1="216" x2="144" y2="368" stroke-width="7"/>
+    <!-- seat tube: BB → seat top -->
+    <line x1="255" y1="390" x2="204" y2="216" stroke-width="10"/>
+    <!-- top tube: seat top → head top -->
+    <line x1="204" y1="216" x2="336" y2="224" stroke-width="10"/>
+    <!-- head tube -->
+    <line x1="336" y1="224" x2="352" y2="270" stroke-width="10"/>
+    <!-- down tube: head bot → BB -->
+    <line x1="352" y1="270" x2="255" y2="390" stroke-width="10"/>
+    <!-- fork: head bot → front axle -->
+    <line x1="352" y1="270" x2="368" y2="368" stroke-width="8"/>
 
-    <!-- Saddle -->
-    <line x1="220" y1="166" x2="218" y2="150" stroke-width="8"/>   <!-- seat post -->
-    <line x1="196" y1="148" x2="238" y2="148" stroke-width="8"/>   <!-- saddle -->
+    <!-- CHAINRING at BB -->
+    <circle cx="255" cy="390" r="24" stroke-width="6"/>
+    <!-- crank arms + pedals -->
+    <line x1="255" y1="390" x2="275" y2="410" stroke-width="6"/>
+    <line x1="271" y1="406" x2="285" y2="420" stroke-width="5" stroke-linecap="square"/>
+    <line x1="255" y1="390" x2="235" y2="370" stroke-width="6"/>
+    <line x1="231" y1="374" x2="218" y2="360" stroke-width="5" stroke-linecap="square"/>
+
+    <!-- DROP HANDLEBARS
+         stem base at head top (336,224), rises to bar center (334,204)
+         bar spans 316–356 at y=204, drops curve down and back
+    -->
+    <line x1="336" y1="224" x2="334" y2="204" stroke-width="7"/>
+    <line x1="314" y1="204" x2="354" y2="204" stroke-width="7"/>
+    <path d="M314,204 C310,216 302,226 298,238" stroke-width="6"/>
+    <path d="M354,204 C358,216 366,226 370,238" stroke-width="6"/>
+
+    <!-- SADDLE
+         seat post extends ~18px above seat tube top
+         saddle: curved line from ~(184,204) to (224,200)
+    -->
+    <line x1="207" y1="220" x2="205" y2="202" stroke-width="7"/>
+    <path d="M183,207 Q204,196 228,203" stroke-width="7"/>
 
   </g>
 </svg>
