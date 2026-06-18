@@ -88,7 +88,7 @@
   })();
   function checkPw(){
     const v=document.getElementById('gate-input').value;
-    if(v==='railbird'){sessionStorage.setItem('srRoadmap','ok');document.getElementById('gate').style.display='none';}
+    if(v==='baseball'){sessionStorage.setItem('srRoadmap','ok');document.getElementById('gate').style.display='none';}
     else{const e=document.getElementById('gate-err');e.style.display='block';document.getElementById('gate-input').value='';document.getElementById('gate-input').focus();}
   }
   document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkPw();});

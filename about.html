@@ -28,35 +28,15 @@
   nav a:hover{background:var(--panel);color:var(--text)}
   nav a.active{background:var(--ink);color:#fff}
 
-  .page{max-width:720px;margin:0 auto;padding:48px 24px 80px}
-
-  .proto-tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border:1px solid var(--bad);color:var(--bad);background:rgba(181,32,32,.06);margin-bottom:28px}
-
-  h2{font-family:var(--display);font-size:22px;font-weight:700;letter-spacing:0;margin-bottom:14px;margin-top:40px;padding-bottom:8px;border-bottom:1px solid var(--line)}
-  h2:first-of-type{margin-top:0}
-
-  p{font-size:14px;line-height:1.75;color:var(--dim);margin-bottom:12px}
+  .page{max-width:600px;margin:0 auto;padding:48px 24px 80px}
+  .proto-tag{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:3px 10px;border:1px solid var(--bad);color:var(--bad);background:rgba(181,32,32,.06);margin-bottom:24px}
+  p{font-size:14px;line-height:1.75;color:var(--dim);margin-bottom:14px}
   p b{color:var(--text)}
   p a{color:var(--bike);text-decoration:none;font-weight:700}
   p a:hover{text-decoration:underline}
-
-  .compare{border:1px solid var(--line);margin:20px 0}
-  .compare-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--panel2)}
-  .compare-row:last-child{border-bottom:none}
-  .compare-row.head{background:var(--panel2);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--faint)}
-  .compare-row div{padding:10px 14px;font-size:13px;line-height:1.55;color:var(--dim)}
-  .compare-row div:first-child{border-right:1px solid var(--panel2)}
-  .compare-row.head div{color:var(--faint)}
-
-  .disclaimer{border:1px solid var(--line);background:var(--panel2);padding:16px 20px;margin-top:36px;font-size:13px;color:var(--dim);line-height:1.65}
+  .disclaimer{border:1px solid var(--line);background:var(--panel2);padding:14px 18px;margin-top:32px;font-size:13px;color:var(--dim);line-height:1.6}
   .disclaimer b{color:var(--text)}
-
-  @media(max-width:600px){
-    header{padding:12px 16px 10px}
-    .page{padding:28px 16px 48px}
-    .compare-row{grid-template-columns:1fr}
-    .compare-row div:first-child{border-right:none;border-bottom:1px solid var(--panel2)}
-  }
+  @media(max-width:600px){header{padding:12px 16px 10px}.page{padding:28px 16px 48px}}
 </style>
 </head>
 <body>
@@ -72,69 +52,14 @@
 <div class="page">
   <div class="proto-tag">Prototype</div>
 
-  <h2>What this is</h2>
-  <p>
-    Spoke &amp; Rail is a trip planner for people who ride bikes and take transit  -  and treats
-    the bicycle as a <b>first-class leg</b> of the trip, not an afterthought. It compares four ways
-    to make the same journey side by side: walk to the train, carry your bike aboard, lock your
-    bike at the station, or dock-to-dock bikeshare.
-  </p>
-  <p>
-    It currently covers <b>Philadelphia</b> (SEPTA + PATCO + Indego), <b>Boston</b> (MBTA), and
-    <b>New York City</b> (MTA + Metro-North + NJ Transit). More cities and routes are planned.
-  </p>
+  <p>Spoke &amp; Rail is a route planner for combining cycling and transit. Google Maps doesn't have this as an option. This does.</p>
 
-  <h2>Why not just use Google Maps?</h2>
-  <p>
-    Google, Citymapper, and Transit all offer some version of bike+transit routing. The problem
-    is they ignore the details that actually determine whether a trip is feasible  -  and whether
-    it's worth it.
-  </p>
+  <p>Enter any two points and it shows you the fastest way to get there using your bike and public transit together - carrying your bike on the train, locking it at the station, or using bikeshare for the first or last mile. It covers Philadelphia (SEPTA + PATCO + Indego), Boston (MBTA), and New York City (MTA + Metro-North + NJ Transit).</p>
 
-  <div class="compare">
-    <div class="compare-row head"><div>What mainstream apps do</div><div>What Spoke &amp; Rail does</div></div>
-    <div class="compare-row">
-      <div>Treat transit as the only option, bikes as a footnote</div>
-      <div>Four scenarios compared on equal footing  -  baseline, carry, lock, bikeshare</div>
-    </div>
-    <div class="compare-row">
-      <div>Ignore SEPTA's bike ban during peak hours</div>
-      <div>Models the real peak rules exactly: PATCO allows bikes 24/7; SEPTA Metro and Regional Rail are off-peak weekdays only</div>
-    </div>
-    <div class="compare-row">
-      <div>Show total fare as if everyone pays the same</div>
-      <div>Shows <b>your</b> marginal cost: an Indego member's bike leg is $0, a casual rider's is $4.50  -  and that changes which route wins</div>
-    </div>
-    <div class="compare-row">
-      <div>Route you to transit even when a direct bike ride is faster</div>
-      <div>Includes a direct bike option up to your set distance limit, with real street routing</div>
-    </div>
-  </div>
-
-  <p>
-    The headline example: Mt. Airy to Collingswood is <b>88 min / ~$11.25</b> the Google way
-    (three fares: Regional Rail + Metro + PATCO). With a personal bike carried aboard it's
-    <b>75 min / ~$5.50</b>  -  biking to the BSL skips the Regional Rail fare entirely.
-    No mainstream app will tell you that.
-  </p>
-
-  <h2>Who made it</h2>
-  <p>
-    Built by <b>Joey Groton</b>, a construction project manager and endurance cyclist in
-    Philadelphia. The routing engine, fare modeling, and UI were developed with
-    <a href="https://claude.ai/code" target="_blank" rel="noopener">Claude Code</a>.
-  </p>
-  <p>
-    This is an early prototype. If you find a bug, a wrong fare, or a missing route,
-    <a href="mailto:josephgroton@gmail.com">send a note</a>  -  it helps.
-  </p>
+  <p>Found a bug or a wrong fare? <a href="mailto:josephgroton@gmail.com">Send a note.</a></p>
 
   <div class="disclaimer">
-    <b>Prototype disclaimer.</b> Fares are modeled as accurately as possible but some
-    Regional Rail and commuter rail figures are estimates (shown with ~). Transit times use
-    average headways, not live schedules. Bike and walk legs use real street geometry via
-    OSRM but do not account for traffic signals, construction, or road conditions. Do not use
-    this app as your only source of truth for a time-sensitive trip.
+    <b>Prototype.</b> Some fares are estimates (marked ~). Fares and bike-aboard rules reflect published agency policy but verify before a time-sensitive trip.
   </div>
 </div>
 
