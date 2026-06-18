@@ -1694,7 +1694,7 @@ function card(sc,r,base){
   return `<div class="card" data-sc="${sc.id}"><div class="top"><div class="name">${sc.name}</div>${costChip}${dTxt}<div class="time">${fmtMin(r.min)}</div></div><div class="hint">${sc.sub}${tc.items.length?' · '+tc.items.join(' + '):''}${availHint}</div>${depLine}</div>`;
 }
 function intercityCard(trip){
-  const peak=$('peak').checked;
+  const peak=isPeak();
   const totalMin=trip.legs.reduce((s,l)=>s+l.min,0);
   const totalFare=trip.fares.reduce((s,f)=>s+f.cost,0);
   const fareTitle=trip.fares.map(f=>`~$${f.cost.toFixed(2)} ${f.label}`).join(' + ');
@@ -1719,7 +1719,8 @@ function intercityCard(trip){
     }
     strip+=`<div class="leg"><div class="rail"><div class="seg ${dashClass}" style="--c:${c}"></div><div class="dot" style="border-color:${c}"></div></div><div class="body">${body}</div><div class="min">${Math.max(1,Math.round(l.min))}m</div></div>`;
   }
-  strip+=`<div class="endrow"><div class="rail"></div><div class="body">Arrive West Point</div></div></div>`;
+  const dest=trip.legs.filter(l=>l.to).at(-1)?.to?.name||'Destination';
+  strip+=`<div class="endrow"><div class="rail"></div><div class="body">Arrive ${dest}</div></div></div>`;
   return `<div class="card sel" data-sc="intercity"><div class="top"><div class="name">${trip.title}</div><span class="cost" title="${fareTitle}">~$${totalFare.toFixed(2)}</span><div class="time">${fmtMin(totalMin)}</div></div><div class="hint">${trip.sub}${peakWarn}</div>${strip}</div>`;
 }
 function selectIntercity(trip){
@@ -1757,14 +1758,24 @@ function renderTurnByTurn(legIdx,steps){
 const ORS_ICONS=['←','→','↙','↘','↖','↗','↑','↻','↻','↩','','↑','↖','↗'];
 function parseOrsSteps(steps){
   return steps
-    .filter(s=>s.distance>5&&s.type!==10&&s.type!==11&&s.name!=='TurnCost')
+    .filter(s=>{
+      const d=+s.distance;
+      if(!isFinite(d)||d<=5)return false;
+      if(s.type===10||s.type===11)return false;
+      /* ORS sometimes emits TurnCost as name or instruction rather than a separate type */
+      const nm=String(s.name||'').trim().toLowerCase();
+      const ins=String(s.instruction||'').trim().toLowerCase();
+      if(nm==='turncost'||ins==='turncost')return false;
+      return true;
+    })
     .map(s=>{
-      /* ORS returns '0', '-', '' for unnamed bike paths; fall back to instruction */
-      const nm=s.name;
-      const validName=nm&&nm!=='-'&&nm!=='0'&&nm.trim()!=='';
-      const street=validName?nm
-        :(s.instruction||'').replace(/^(Head\s+\w+(\s+on\s+)?|Turn\s+(left|right)\s+(onto\s+)?|Keep\s+(left|right)(\s+on\s+)?|Slight\s+(left|right)(\s+on\s+)?|Continue\s+on\s+|Go\s+straight(\s+on\s+)?|At\s+roundabout[^,]+,\s*take\s+exit\s+\d+\s*(onto\s+)?|Make\s+a\s+U-turn(\s+on\s+)?)/i,'').trim()||'continue';
-      return {icon:ORS_ICONS[s.type]??'↑',street,distM:s.distance};
+      /* ORS returns '0', '-', '' for unnamed bike paths; fall back to instruction verb-stripped */
+      const nm=String(s.name||'').trim();
+      const validName=nm&&nm!=='-'&&nm!=='0';
+      const stripped=(s.instruction||'').replace(/^(Head\s+\w+(\s+on\s+)?|Turn\s+(left|right)\s+(onto\s+)?|Keep\s+(left|right)(\s+on\s+)?|Slight\s+(left|right)(\s+on\s+)?|Continue\s+on\s+|Go\s+straight(\s+on\s+)?|At\s+roundabout[^,]+,\s*take\s+exit\s+\d+\s*(onto\s+)?|Make\s+a\s+U-turn(\s+on\s+)?)/i,'').trim();
+      const validStripped=stripped&&stripped!=='0'&&stripped!=='-';
+      const street=validName?nm:validStripped?stripped:'continue';
+      return {icon:ORS_ICONS[s.type]??'↑',street,distM:+s.distance};
     });
 }
 
