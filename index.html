@@ -1757,24 +1757,24 @@ function renderTurnByTurn(legIdx,steps){
 /* ORS cycling-safe step types → arrow icons */
 const ORS_ICONS=['←','→','↙','↘','↖','↗','↑','↻','↻','↩','','↑','↖','↗'];
 function parseOrsSteps(steps){
+  /* A name is only useful if it's not blank, a dash, or a bare number (e.g. "0", "89", "95") */
+  const named=n=>{const s=String(n||'').trim();return s&&s!=='-'&&!/^\d+$/.test(s);};
+  const STRAIGHT=6;
   return steps
     .filter(s=>{
       const d=+s.distance;
       if(!isFinite(d)||d<=5)return false;
       if(s.type===10||s.type===11)return false;
-      /* ORS sometimes emits TurnCost as name or instruction rather than a separate type */
-      const nm=String(s.name||'').trim().toLowerCase();
-      const ins=String(s.instruction||'').trim().toLowerCase();
-      if(nm==='turncost'||ins==='turncost')return false;
+      /* ORS emits TurnCost as name or instruction — catch both */
+      if(String(s.name||'').toLowerCase().includes('turncost'))return false;
+      if(String(s.instruction||'').toLowerCase().includes('turncost'))return false;
+      /* Unnamed straight-ahead steps are pure noise — drop them */
+      if(s.type===STRAIGHT&&!named(s.name))return false;
       return true;
     })
     .map(s=>{
-      /* ORS returns '0', '-', '' for unnamed bike paths; fall back to instruction verb-stripped */
-      const nm=String(s.name||'').trim();
-      const validName=nm&&nm!=='-'&&nm!=='0';
       const stripped=(s.instruction||'').replace(/^(Head\s+\w+(\s+on\s+)?|Turn\s+(left|right)\s+(onto\s+)?|Keep\s+(left|right)(\s+on\s+)?|Slight\s+(left|right)(\s+on\s+)?|Continue\s+on\s+|Go\s+straight(\s+on\s+)?|At\s+roundabout[^,]+,\s*take\s+exit\s+\d+\s*(onto\s+)?|Make\s+a\s+U-turn(\s+on\s+)?)/i,'').trim();
-      const validStripped=stripped&&stripped!=='0'&&stripped!=='-';
-      const street=validName?nm:validStripped?stripped:'continue';
+      const street=named(s.name)?String(s.name).trim():named(stripped)?stripped:'path';
       return {icon:ORS_ICONS[s.type]??'↑',street,distM:+s.distance};
     });
 }
