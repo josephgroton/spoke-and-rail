@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spoke &amp; Rail — Roadmap</title>
+<title>Spoke &amp; Rail  -  Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#18140f; --panel:#f5f0e8; --panel2:#ede8df; --line:#18140f;
     --paper:#faf6f0; --text:#18140f; --dim:#6b6258; --faint:#9a9288;
     --good:#0a6b4e; --bad:#b52020; --bike:#0d8f6a;
-    --display:'Arial Narrow',Arial,sans-serif;
-    --body:Arial,sans-serif;
-    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --display:Inter,Arial,sans-serif;
+    --body:Inter,Arial,sans-serif;
+    --mono:Inter,Arial,sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--body);background:var(--paper);color:var(--text);min-height:100vh}
@@ -72,7 +75,7 @@
 <body>
 <div id="gate">
   <div id="gate-box">
-    <h2>Spoke <span style="color:var(--bike)">&amp;</span> Rail — Roadmap</h2>
+    <h2>Spoke <span style="color:var(--bike)">&amp;</span> Rail  -  Roadmap</h2>
     <p>This page is for collaborators. Enter the password to continue.</p>
     <input id="gate-input" type="password" placeholder="password" autocomplete="off">
     <button id="gate-btn" onclick="checkPw()">Enter</button>
@@ -103,7 +106,7 @@
   <p class="intro">
     What's built, what's next, and what's on the wishlist. <b>Proposed</b> items are things Joey has asked for;
     <b>Ideas</b> are suggestions based on what would make the biggest difference to the routing quality or geographic coverage.
-    This is a living document — the order within each section roughly reflects priority.
+    This is a living document  -  the order within each section roughly reflects priority.
   </p>
 
   <div class="legend">
@@ -114,12 +117,12 @@
 
   <!-- =================== NETWORK =================== -->
   <div class="section">
-    <div class="section-head">Network — transit data</div>
+    <div class="section-head">Network  -  transit data</div>
 
     <div class="item">
       <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">Philadelphia — SEPTA + PATCO</div>
+        <div class="item-title">Philadelphia  -  SEPTA + PATCO</div>
         <div class="item-desc">Full network: all 13 Regional Rail lines with zone fares, Market-Frankford + Broad Street + PATCO with exact fares, surface trolleys, sample Indego docks. Peak bike rules modeled exactly (PATCO always; SEPTA Metro/RR off-peak weekdays).</div>
       </div>
     </div>
@@ -127,7 +130,7 @@
     <div class="item">
       <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">Boston — MBTA</div>
+        <div class="item-title">Boston  -  MBTA</div>
         <div class="item-desc">Red, Orange, Green (B/C/D/E branches), Blue lines + Silver Line + key bus routes + commuter rail sketch. CharlieCard flat fare modeled.</div>
       </div>
     </div>
@@ -135,15 +138,15 @@
     <div class="item">
       <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">NYC — MTA Subway (L, J/Z, G)</div>
-        <div class="item-desc">Three lines covering Brooklyn and the L corridor into Manhattan. Bikes allowed 24/7 on NYC subway — no peak restrictions, which is modeled correctly.</div>
+        <div class="item-title">NYC  -  MTA Subway (L, J/Z, G)</div>
+        <div class="item-desc">Three lines covering Brooklyn and the L corridor into Manhattan. Bikes allowed 24/7 on NYC subway  -  no peak restrictions, which is modeled correctly.</div>
       </div>
     </div>
 
     <div class="item">
       <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">NYC — Metro-North Hudson + Harlem Lines</div>
+        <div class="item-title">NYC  -  Metro-North Hudson + Harlem Lines</div>
         <div class="item-desc">Hudson Line (GCT → Poughkeepsie, 10 stations) and Harlem Line (GCT → Brewster, 8 stations). Zone fares MN0–MN7, bikes off-peak only. Segment times calibrated to real timetables.</div>
       </div>
     </div>
@@ -151,7 +154,7 @@
     <div class="item">
       <span class="badge shipped">Shipped</span>
       <div class="item-body">
-        <div class="item-title">NYC — NJ Transit NEC, Coast Line, Raritan Valley</div>
+        <div class="item-title">NYC  -  NJ Transit NEC, Coast Line, Raritan Valley</div>
         <div class="item-desc">Northeast Corridor (Penn → Trenton), North Jersey Coast Line (Penn → Bay Head), Raritan Valley Line (Penn → High Bridge). Newark Penn shared as transfer hub. Zone fares NJT0–NJT8.</div>
       </div>
     </div>
@@ -159,7 +162,7 @@
     <div class="item">
       <span class="badge proposed">Proposed</span>
       <div class="item-body">
-        <div class="item-title">NYC — LIRR (Long Island Rail Road)</div>
+        <div class="item-title">NYC  -  LIRR (Long Island Rail Road)</div>
         <div class="item-desc">Penn Station to Long Island: Port Washington, Babylon, Far Rockaway, Ronkonkoma branches. Key destinations for shore and state park cycling. Bikes off-peak only.</div>
       </div>
     </div>
@@ -167,7 +170,7 @@
     <div class="item">
       <span class="badge proposed">Proposed</span>
       <div class="item-body">
-        <div class="item-title">NYC — Subway expansion (A/C/E, 1/2/3, 4/5/6, N/Q/R/W, B/D/F/M, 7)</div>
+        <div class="item-title">NYC  -  Subway expansion (A/C/E, 1/2/3, 4/5/6, N/Q/R/W, B/D/F/M, 7)</div>
         <div class="item-desc">The remaining major subway lines to make NYC routing complete enough to compare bike+transit for trips that don't start near the L, J/Z, or G.</div>
       </div>
     </div>
@@ -175,7 +178,7 @@
     <div class="item">
       <span class="badge proposed">Proposed</span>
       <div class="item-body">
-        <div class="item-title">NYC — Citi Bike docks (Manhattan)</div>
+        <div class="item-title">NYC  -  Citi Bike docks (Manhattan)</div>
         <div class="item-desc">Hardcoded key dock locations across Manhattan to enable the Citi Bike scenario in NYC mode, the way Indego docks work in Philly mode.</div>
       </div>
     </div>
@@ -183,7 +186,7 @@
     <div class="item">
       <span class="badge proposed">Proposed</span>
       <div class="item-body">
-        <div class="item-title">NYC — NJ Transit additional lines</div>
+        <div class="item-title">NYC  -  NJ Transit additional lines</div>
         <div class="item-desc">Morris &amp; Essex (Morristown + Gladstone branches), Montclair-Boonton, Pascack Valley, Port Jervis. Extends NJT coverage into northern NJ and the Hudson Valley.</div>
       </div>
     </div>
@@ -208,14 +211,14 @@
       <span class="badge idea">Idea</span>
       <div class="item-body">
         <div class="item-title">NYC Ferry routes</div>
-        <div class="item-desc">NYC DOT Ferry is an underrated bike+transit connector — bikes always allowed, serves Astoria, Long Island City, South Brooklyn, Rockaway. Flat fare ~$4. Could unlock some compelling showcase routes.</div>
+        <div class="item-desc">NYC DOT Ferry is an underrated bike+transit connector  -  bikes always allowed, serves Astoria, Long Island City, South Brooklyn, Rockaway. Flat fare ~$4. Could unlock some compelling showcase routes.</div>
       </div>
     </div>
 
     <div class="item">
       <span class="badge idea">Idea</span>
       <div class="item-body">
-        <div class="item-title">Washington DC — WMATA Metro + Capital Bikeshare</div>
+        <div class="item-title">Washington DC  -  WMATA Metro + Capital Bikeshare</div>
         <div class="item-desc">The Metro allows bikes off-peak on all lines. Capital Bikeshare is one of the best-integrated bikeshare systems in the US. Good candidate for a fourth city given the strong bike+transit culture.</div>
       </div>
     </div>
@@ -277,7 +280,7 @@
       <span class="badge idea">Idea</span>
       <div class="item-body">
         <div class="item-title">Permalink / shareable trip URL</div>
-        <div class="item-desc">Encode origin, destination, city, and profile into URL query params so a trip can be bookmarked or sent to someone. Low-effort, high-utility — especially for the public lands showcase routes.</div>
+        <div class="item-desc">Encode origin, destination, city, and profile into URL query params so a trip can be bookmarked or sent to someone. Low-effort, high-utility  -  especially for the public lands showcase routes.</div>
       </div>
     </div>
   </div>
@@ -327,7 +330,7 @@
       <span class="badge idea">Idea</span>
       <div class="item-body">
         <div class="item-title">OpenTripPlanner 2 backend</div>
-        <div class="item-desc">Replace the hand-built Dijkstra with OTP 2 self-hosted on a VPS (~$40–80/mo for 8–16 GB RAM). OTP handles bike+transit and bikeshare natively from real GTFS + OSM. The custom work becomes the cost model, peak rules, and this UI — which is where the product differentiation actually lives.</div>
+        <div class="item-desc">Replace the hand-built Dijkstra with OTP 2 self-hosted on a VPS (~$40–80/mo for 8–16 GB RAM). OTP handles bike+transit and bikeshare natively from real GTFS + OSM. The custom work becomes the cost model, peak rules, and this UI  -  which is where the product differentiation actually lives.</div>
       </div>
     </div>
 
