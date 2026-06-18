@@ -1746,12 +1746,17 @@ function fmtDist(m){return m<800?`${Math.round(m)}m`:`${(m/1609.34).toFixed(1)} 
 /* ── Turn-by-turn helpers ─────────────────────────────────────────────────── */
 function renderTurnByTurn(legIdx,steps){
   const el=document.getElementById(`tbt-${legIdx}`);
-  if(!el||!steps.length){if(el)el.remove();return;}
+  if(!el)return;
+  if(!steps.length){el.innerHTML='<span class="tbt-loading">Directions unavailable for this segment</span>';return;}
   let html='<div class="tbt-steps">';
   for(const s of steps)
     html+=`<div class="tbt-step"><span class="tbt-ic">${s.icon}</span><span class="tbt-street">${s.street}</span><span class="tbt-dist">${fmtDist(s.distM)}</span></div>`;
   html+='</div>';
   el.innerHTML=html;
+}
+function tbtUnavailable(legIdx){
+  const el=document.getElementById(`tbt-${legIdx}`);
+  if(el)el.innerHTML='<span class="tbt-loading">Directions unavailable for this segment</span>';
 }
 
 /* ORS cycling-safe step types → arrow icons */
@@ -1808,7 +1813,20 @@ function parseBrouterSteps(msgs){
 /* ── Bike routing: ORS cycling-safe → BRouter safety fallback ─────────────
    ORS hard-avoids arterials without bike infrastructure.
    BRouter safety is used as geometry + TBT fallback if ORS is absent/fails. */
-const clearTbt=legIdx=>{if(legIdx!=null){const el=document.getElementById(`tbt-${legIdx}`);if(el)el.remove();}};
+const clearTbt=legIdx=>{if(legIdx!=null)tbtUnavailable(legIdx);};
+
+function fetchBrouterTbt(from,to,legIdx,epoch){
+  const url=`https://brouter.de/brouter?lonlats=${from.lng},${from.lat}|${to.lng},${to.lat}&profile=safety&alternativeidx=0&format=geojson`;
+  fetch(url)
+    .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(data=>{
+      if(selEpoch!==epoch)return;
+      if(!data.features?.length){tbtUnavailable(legIdx);return;}
+      const steps=parseBrouterSteps(data.features[0].properties?.messages||[]);
+      renderTurnByTurn(legIdx,steps);
+    })
+    .catch(()=>tbtUnavailable(legIdx));
+}
 
 function fetchBikeRoute(from,to,idx,epoch,opts,legIdx){
   if(ORS_KEY){
@@ -1823,7 +1841,9 @@ function fetchBikeRoute(from,to,idx,epoch,opts,legIdx){
         routeLayers[idx]=L.polyline(coords,opts).addTo(map);
         if(legIdx!=null){
           const steps=data.features[0].properties?.segments?.[0]?.steps||[];
-          renderTurnByTurn(legIdx,parseOrsSteps(steps));
+          const parsed=parseOrsSteps(steps);
+          if(parsed.length>0){renderTurnByTurn(legIdx,parsed);}
+          else{fetchBrouterTbt(from,to,legIdx,epoch);}
         }
       })
       .catch(()=>fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx));
