@@ -1827,7 +1827,10 @@ function fetchBikeRoute(from,to,idx,epoch,opts,legIdx){
         routeLayers[idx]=L.polyline(coords,opts).addTo(map);
         if(legIdx!=null){
           const steps=data.features[0].properties?.segments?.[0]?.steps||[];
-          renderTurnByTurn(legIdx,parseOrsSteps(steps));
+          console.log('[ORS] steps count:',steps.length,'first 3:',JSON.stringify(steps.slice(0,3)));
+          const parsed=parseOrsSteps(steps);
+          console.log('[ORS] parsed count:',parsed.length,'first 3:',JSON.stringify(parsed.slice(0,3)));
+          renderTurnByTurn(legIdx,parsed);
         }
       })
       .catch(()=>fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx));
