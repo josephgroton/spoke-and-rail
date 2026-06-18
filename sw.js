@@ -1,4 +1,4 @@
-const CACHE = 'spoke-rail-v2';
+const CACHE = 'velorail-v1';
 const CDN = [
   '/velorail/icon.svg',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',

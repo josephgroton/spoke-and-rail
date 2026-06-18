@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>if(localStorage.getItem('vrDark')==='1')document.documentElement.className='dark';</script>
+<script>if(localStorage.getItem('vrDark')==='1')document.documentElement.classList.add('dark');</script>
 <title>Velorail  -  bike+transit router</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -1558,7 +1558,7 @@ function compute(){
   if(peak)html+=`<div class="note" style="color:var(--bad);border-color:rgba(181,32,32,.3)">Peak hours: SEPTA bars bikes on Metro and Regional Rail. Carry options may be unavailable.</div>`;
   for(const sc of sorted) html+=card(sc,itins[sc.id],base);
   if(PROF.hasBike&&hav(A,B)*CIRCUITY>PROF.bikeMax)
-    html+=`<div class="note">Bike-only not shown: ${(hav(A,B)*CIRCUITY).toFixed(1)} mi exceeds your ${PROF.bikeMax} mi max. Adjust in rider profile to see it.</div>`;
+    html+=`<div class="note">Bike-only not shown: ${(hav(A,B)*CIRCUITY).toFixed(1)} mi exceeds your ${PROF.bikeMax} mi max. Tap ≡ to adjust.</div>`;
   const isBoston=LINES===window.BOSTON_DATA?.LINES, isNYC=LINES===window.NYC_DATA?.LINES;
   const cityFareNote=isBoston?'MBTA $2.40/boarding (CharlieCard). Commuter Rail and Bluebikes not yet modeled.'
     :isNYC?'MTA $2.90/boarding (OMNY). Bikes allowed on subway 24/7  -  no peak restrictions.'
