@@ -226,6 +226,7 @@
           <button id="clearDepart" style="background:none;border:none;color:var(--faint);font-size:14px;padding:0 2px;cursor:pointer;line-height:1" title="Clear">×</button>
         </div>
       </div>
+      <button id="routeBtn" onclick="compute()" style="display:block;width:100%;margin-top:6px;border:2px solid var(--ink);background:var(--ink);color:var(--panel);font-family:var(--display);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;padding:7px 0;cursor:pointer;line-height:1;border-radius:0">Route</button>
       <div class="hint" id="networkHint">Type to search  -  pick a suggestion or press Enter. You can also click the map. Network: all SEPTA Regional Rail lines, MFL, BSL, PATCO, surface trolleys, and sample Indego docks.</div>
     </div>
     <div id="results"><div class="hint" style="padding-top:4px">Pick an example trip or set two points on the map.</div></div>
@@ -280,11 +281,11 @@ let LINES = {
   TRE:  {name:'Trenton Line',           color:'#004D40', headway:30, bikes:'offpeak', rr:true},
   CYN:  {name:'Cynwyd Line',            color:'#558B2F', headway:60, bikes:'offpeak', rr:true},
   /* SEPTA Surface Trolleys */
-  T10:  {name:'Route 10 (Lancaster/Sharon Hill)', color:'#2E7D32', headway:10, bikes:'offpeak'},
-  T11:  {name:'Route 11 (Darby/Woodland)',        color:'#2E7D32', headway:10, bikes:'offpeak'},
-  T13:  {name:'Route 13 (Chester Ave)',            color:'#2E7D32', headway:10, bikes:'offpeak'},
-  T34:  {name:'Route 34 (Baltimore Ave)',          color:'#2E7D32', headway:10, bikes:'offpeak'},
-  T36:  {name:'Route 36 (Elmwood Ave)',            color:'#2E7D32', headway:10, bikes:'offpeak'},
+  T10:  {name:'Route 10 (Lancaster/Sharon Hill)', color:'#2E7D32', headway:10, bikes:'never'}, /* SEPTA trolleys do not allow bikes */
+  T11:  {name:'Route 11 (Darby/Woodland)',        color:'#2E7D32', headway:10, bikes:'never'},
+  T13:  {name:'Route 13 (Chester Ave)',            color:'#2E7D32', headway:10, bikes:'never'},
+  T34:  {name:'Route 34 (Baltimore Ave)',          color:'#2E7D32', headway:10, bikes:'never'},
+  T36:  {name:'Route 36 (Elmwood Ave)',            color:'#2E7D32', headway:10, bikes:'never'},
 };
 /* st(id,name,lat,lng)  -  order within each line array is track order */
 let STATIONS = {};
@@ -875,6 +876,9 @@ try{(()=>{
 <script>
 /* ================= ROUTING ENGINE ================= */
 const HERE_KEY='xfWS_IKy4DXwF5vv0-fU8S64GYw3l6c-CmMDWj6KYLU';
+/* OpenRouteService key for cycling-safe bike routing (hard-avoids arterials w/o bike infra).
+   Free tier at openrouteservice.org (2 000 req/day). Leave '' to fall back to BRouter. */
+const ORS_KEY='';
 const BIKE_MPH=11, WALK_MPH=3.1, CIRCUITY=1.3;
 const WALK_MAX=1.05, BIKE_MAX=6.5, LOCK_MIN=1.5, DOCK_MIN=1.5;
 function hav(a,b){
@@ -1338,7 +1342,7 @@ $('aInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('aSugg'),150));
 $('bInput').addEventListener('blur',()=>setTimeout(()=>closeSugg('bSugg'),150));
 for(const id of ['hasBike','carryOK','indegoPlan'])$(id).addEventListener('change',()=>{saveProfile();compute();});
 $('bikeMax').addEventListener('change',()=>{saveProfile();compute();});
-$('departInput').addEventListener('change',()=>{LEAVE_NOW=false;$('leaveNow').classList.remove('active');parseArriveMin();compute();});
+$('departInput').addEventListener('change',()=>{LEAVE_NOW=false;$('leaveNow').classList.remove('active');parseArriveMin();});
 $('clearDepart').addEventListener('click',()=>{$('departInput').value='';ARRIVE_MIN=null;SCHED_START=null;LEAVE_NOW=false;$('leaveNow').classList.remove('active');compute();});
 $('leaveNow').addEventListener('click',()=>{LEAVE_NOW=!LEAVE_NOW;if(LEAVE_NOW){$('departInput').value='';ARRIVE_MIN=null;}$('leaveNow').classList.toggle('active',LEAVE_NOW);compute();});
 /* ── GTFS integration ────────────────────────────────────────────────── */
@@ -1530,7 +1534,11 @@ function isPeak(){
 function compute(){
   if(!A||!B)return;
   readProfile();
-  const peak=isPeak();
+  /* Refresh SCHED_START before peak detection.  A stale value left over from a prior
+     Leave-Now run would make isPeak() return true for a non-peak Arrive-By trip. */
+  if(LEAVE_NOW){const n=new Date();SCHED_START=n.getHours()*60+n.getMinutes();}
+  else{SCHED_START=null;}
+  let peak=isPeak();
   itins={};clearRoutes();
   if(intercityTrip){
     $('results').innerHTML=intercityCard(intercityTrip);
@@ -1538,13 +1546,13 @@ function compute(){
     selectIntercity(intercityTrip);
     return;
   }
-  /* Scheduling: Leave now = current clock; Arrive by = two-pass back-calculation */
-  if(LEAVE_NOW){const n=new Date();SCHED_START=n.getHours()*60+n.getMinutes();}
-  else if(ARRIVE_MIN!==null){
-    SCHED_START=null;
+  /* Arrive-By: back-calculate real departure via rough baseline, then re-check peak.
+     (Handles edge cases like arriving at 9:30a when departure falls inside AM peak.) */
+  if(!LEAVE_NOW&&ARRIVE_MIN!==null){
     const rough=route('baseline',peak,A,B);
     SCHED_START=rough?Math.max(0,ARRIVE_MIN-Math.round(rough.min)):ARRIVE_MIN;
-  }else{SCHED_START=null;}
+    peak=isPeak();
+  }
   const base=route('baseline',peak,A,B);
   for(const sc of ACTIVE){
     let r;
@@ -1664,50 +1672,114 @@ function selectIntercity(trip){
   if(allPts.length>1)map.fitBounds(allPts,{padding:[50,50]});
 }
 let selEpoch=0;
-function tbtIcon(m){
-  const t=m.type,mod=m.modifier||'';
-  if(t==='depart')return '↑';
-  if(t==='arrive')return '●';
-  if(t==='roundabout'||t==='rotary')return '↻';
-  if(mod.includes('sharp left'))return '↙';
-  if(mod.includes('slight left'))return '↖';
-  if(mod==='left')return '←';
-  if(mod.includes('sharp right'))return '↘';
-  if(mod.includes('slight right'))return '↗';
-  if(mod==='right')return '→';
-  if(mod==='uturn')return '↩';
-  return '↑';
-}
 function fmtDist(m){return m<800?`${Math.round(m)}m`:`${(m/1609.34).toFixed(1)} mi`;}
+
+/* ── Turn-by-turn helpers ─────────────────────────────────────────────────── */
 function renderTurnByTurn(legIdx,steps){
   const el=document.getElementById(`tbt-${legIdx}`);
   if(!el||!steps.length){if(el)el.remove();return;}
   let html='<div class="tbt-steps">';
-  for(const s of steps){
-    if(s.maneuver.type==='arrive')continue;
-    const name=s.name||(s.ref?s.ref:'unnamed road');
-    html+=`<div class="tbt-step"><span class="tbt-ic">${tbtIcon(s.maneuver)}</span><span class="tbt-street">${name}</span><span class="tbt-dist">${fmtDist(s.distance)}</span></div>`;
-  }
+  for(const s of steps)
+    html+=`<div class="tbt-step"><span class="tbt-ic">${s.icon}</span><span class="tbt-street">${s.street}</span><span class="tbt-dist">${fmtDist(s.distM)}</span></div>`;
   html+='</div>';
   el.innerHTML=html;
 }
-function fetchOsrmRoute(profile,from,to,idx,epoch,opts,legIdx){
-  const base=profile==='foot'
-    ?`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}`
-    :`https://routing.openstreetmap.de/routed-bike/route/v1/bike/${from.lng},${from.lat};${to.lng},${to.lat}`;
-  const qs=profile==='bike'?'?overview=full&geometries=geojson&steps=true':'?overview=full&geometries=geojson';
-  fetch(base+qs)
+
+/* ORS cycling-safe step types → arrow icons */
+const ORS_ICONS=['←','→','↙','↘','↖','↗','↑','↻','↻','↩','','↑','↖','↗'];
+function parseOrsSteps(steps){
+  return steps
+    .filter(s=>s.distance>5&&s.type!==10&&s.type!==11)
+    .map(s=>({
+      icon:ORS_ICONS[s.type]??'↑',
+      street:(s.name&&s.name!=='-')?s.name:'unnamed road',
+      distM:s.distance,
+    }));
+}
+
+/* BRouter fallback step parser */
+function parseBrouterSteps(msgs){
+  const steps=[];
+  for(let i=0;i<msgs.length-1;i++){
+    const m=msgs[i],next=msgs[i+1];
+    const text=(m[6]||'').trim();
+    if(!text)continue;
+    const distM=parseFloat(next[3])-parseFloat(m[3]);
+    if(distM<5)continue;
+    const l=text.toLowerCase();
+    let icon='↑';
+    if(l.includes('turn left'))icon='←';
+    else if(l.includes('turn right'))icon='→';
+    else if(l.includes('sharp left'))icon='↙';
+    else if(l.includes('sharp right'))icon='↘';
+    else if(l.includes('left'))icon='↖';
+    else if(l.includes('right'))icon='↗';
+    else if(l.includes('roundabout')||l.includes('rotary'))icon='↻';
+    else if(l.includes('u-turn'))icon='↩';
+    const street=text.replace(/^(turn\s+(left|right)|keep\s+(left|right)|slight\s+(left|right)|continue|proceed|go\s+straight|merge|exit|take|u-turn|roundabout[^:]*:?\s*)\s*(onto\s+|on\s+|via\s+)?/i,'').trim()||text;
+    steps.push({icon,street,distM});
+  }
+  return steps;
+}
+
+/* ── Bike routing: ORS cycling-safe (preferred) → BRouter safety (fallback) ─
+   ORS hard-avoids arterials and highways without bike infrastructure via LTS
+   weighting tuned for North American cities. BRouter safety penalises them
+   but may still route on primary roads when no alternative exists.           */
+function fetchBikeRoute(from,to,idx,epoch,opts,legIdx){
+  if(ORS_KEY){
+    const url=`https://api.openrouteservice.org/v2/directions/cycling-safe?api_key=${ORS_KEY}&start=${from.lng},${from.lat}&end=${to.lng},${to.lat}`;
+    fetch(url,{headers:{'Accept':'application/json, application/geo+json'}})
+      .then(r=>r.json())
+      .then(data=>{
+        if(selEpoch!==epoch||!data.features?.length||!routeLayers[idx])return;
+        const feat=data.features[0];
+        const coords=feat.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        routeLayers[idx].remove();
+        routeLayers[idx]=L.polyline(coords,opts).addTo(map);
+        if(legIdx!=null){
+          const steps=feat.properties?.segments?.[0]?.steps||[];
+          renderTurnByTurn(legIdx,parseOrsSteps(steps));
+        }
+      })
+      .catch(()=>{
+        /* ORS failed – fall back to BRouter */
+        fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx);
+      });
+  } else {
+    fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx);
+  }
+}
+
+function fetchBrouterBikeRoute(from,to,idx,epoch,opts,legIdx){
+  const url=`https://brouter.de/brouter?lonlats=${from.lng},${from.lat}|${to.lng},${to.lat}&profile=safety&alternativeidx=0&format=geojson`;
+  fetch(url)
     .then(r=>r.json())
     .then(data=>{
-      if(selEpoch!==epoch||!data.routes?.length||!routeLayers[idx])return;
-      const coords=data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+      if(selEpoch!==epoch||!data.features?.length||!routeLayers[idx])return;
+      const feat=data.features[0];
+      const coords=feat.geometry.coordinates.map(([lng,lat])=>[lat,lng]);
       routeLayers[idx].remove();
       routeLayers[idx]=L.polyline(coords,opts).addTo(map);
-      if(profile==='bike'&&legIdx!=null){
-        renderTurnByTurn(legIdx,data.routes[0].legs[0]?.steps||[]);
-      }
+      if(legIdx!=null)renderTurnByTurn(legIdx,parseBrouterSteps(feat.properties?.messages||[]));
     })
-    .catch(()=>{if(profile==='bike'&&legIdx!=null){const el=document.getElementById(`tbt-${legIdx}`);if(el)el.remove();}});
+    .catch(()=>{if(legIdx!=null){const el=document.getElementById(`tbt-${legIdx}`);if(el)el.remove();}});
+}
+
+function fetchOsrmRoute(profile,from,to,idx,epoch,opts,legIdx){
+  if(profile==='bike'){
+    fetchBikeRoute(from,to,idx,epoch,opts,legIdx);
+  } else {
+    fetch(`https://routing.openstreetmap.de/routed-foot/route/v1/foot/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`)
+      .then(r=>r.json())
+      .then(data=>{
+        if(selEpoch!==epoch||!data.routes?.length||!routeLayers[idx])return;
+        const coords=data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+        routeLayers[idx].remove();
+        routeLayers[idx]=L.polyline(coords,opts).addTo(map);
+      })
+      .catch(()=>{});
+  }
 }
 function select(scId){
   if(!scId)return;
